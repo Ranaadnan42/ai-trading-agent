@@ -53,8 +53,30 @@ def _openai_style(url, key, model, system, user, extra_headers=None):
     body = {"model": model, "temperature": 0.2,
             "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]}
     r = requests.post(url, headers=headers, json=body, timeout=TIMEOUT)
-    r.raise_for_status()
+    if r.status_code >= 400:
+        raise RuntimeError(f"HTTP {r.status_code}: {r.text[:200]}")
     return r.json()["choices"][0]["message"]["content"]
+
+
+_groq_cache = None
+
+
+def _groq_live_models(prefer):
+    """Groq retires models often; pick working chat models live from its /models list."""
+    global _groq_cache
+    if _groq_cache is None:
+        try:
+            r = requests.get("https://api.groq.com/openai/v1/models", timeout=30,
+                             headers={"Authorization": f"Bearer {os.environ['GROQ_API_KEY']}"})
+            skip = ("whisper", "tts", "guard", "embed", "orpheus", "playai", "compound", "prompt")
+            _groq_cache = [m["id"] for m in r.json().get("data", [])
+                           if m.get("active", True) and not any(x in m["id"].lower() for x in skip)]
+            print("Groq live models:", _groq_cache)
+        except Exception as e:
+            print("Groq model list failed:", e)
+            _groq_cache = []
+    pref = [prefer.split("/")[-1].split("-")[0].lower(), "llama", "qwen", "gpt-oss", "kimi", "deepseek"]
+    return sorted(_groq_cache, key=lambda i: next((n for n, p in enumerate(pref) if p in i.lower()), 99))
 
 
 _free_models_cache = None
@@ -82,6 +104,10 @@ def ask(member, system, user, retries=2):
     models = [member["model"]]
     if p == "openrouter" and member["model"] == "auto-free":
         models = _openrouter_free_models()
+    elif p == "groq":
+        live = _groq_live_models(member["model"])
+        models = ([member["model"]] if member["model"] in live or not live else []) + \
+                 [m for m in live if m != member["model"]][:2]
     for model in models:
         for attempt in range(retries):
             try:
