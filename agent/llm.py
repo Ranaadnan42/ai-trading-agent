@@ -10,7 +10,7 @@ TIMEOUT = 90
 
 # Committee members. A member without its key is skipped automatically.
 COMMITTEE = [
-    {"name": "Gemini", "provider": "gemini", "model": os.getenv("GEMINI_MODEL", "gemini-2.5-flash")},
+    {"name": "Gemini", "provider": "gemini", "model": os.getenv("GEMINI_MODEL", "gemini-3.5-flash")},
     {"name": "Groq-Llama", "provider": "groq", "model": os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")},
     {"name": "OpenRouter", "provider": "openrouter", "model": os.getenv("OPENROUTER_MODEL", "auto-free")},
 ]
@@ -20,7 +20,7 @@ KEYS = {"gemini": "GEMINI_API_KEY", "groq": "GROQ_API_KEY", "openrouter": "OPENR
 # Backups: used only to fill the committee up to 3 when a main member has no key.
 BACKUPS = [
     {"name": "Groq-Qwen", "provider": "groq", "model": "qwen/qwen3-32b"},
-    {"name": "Gemini-Lite", "provider": "gemini", "model": "gemini-2.5-flash-lite"},
+    {"name": "Gemini-Lite", "provider": "gemini", "model": "gemini-flash-lite-latest"},
     {"name": "Groq-GPT-OSS", "provider": "groq", "model": "openai/gpt-oss-120b"},
 ]
 
