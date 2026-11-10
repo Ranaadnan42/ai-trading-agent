@@ -1,0 +1,48 @@
+name: Daily Learning Review
+
+on:
+  schedule:
+    - cron: "20 22 * * 1-5"  # every night after New York close
+  workflow_dispatch:
+
+concurrency:
+  group: trading-agent
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      MODE: ${{ vars.MODE || 'paper' }}
+      SYMBOL: ${{ vars.SYMBOL || 'XAUUSD' }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      METAAPI_TOKEN: ${{ secrets.METAAPI_TOKEN }}
+      METAAPI_ACCOUNT_ID: ${{ secrets.METAAPI_ACCOUNT_ID }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - if: env.MODE == 'metaapi'
+        run: pip install metaapi-cloud-sdk
+      - name: Nightly self-review (learning)
+        run: python -m agent.review
+      - name: Save memory (journal, lessons, state)
+        if: always()
+        run: |
+          git config user.name "trading-agent"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/
+          git diff --cached --quiet && exit 0
+          git commit -m "agent: daily review $(date -u +%F' '%H:%M)"
+          for i in 1 2 3; do git pull --rebase -q && git push && break; sleep 5; done

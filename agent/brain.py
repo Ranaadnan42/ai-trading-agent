@@ -1,0 +1,74 @@
+"""The thinking part: a committee of free AIs studies the market and must agree before any trade."""
+import json
+import statistics
+
+from . import config, llm
+
+SYSTEM = f"""You are one member of a 3-member AI trading committee for {config.SYMBOL} (gold), a swing trader on 1H/4H/Daily charts.
+Your only goal is long-term profit with small drawdowns. Capital protection comes first.
+Rules you must respect:
+- HOLD is the default. Trade only when trend, structure, and momentum clearly line up and the entry is not late/chasing.
+- Every trade needs a logical stop-loss beyond recent structure (swing high/low), roughly {config.MIN_SL_ATR}-{config.MAX_SL_ATR}x the 1H ATR.
+- Take-profit must give at least {config.MIN_RR}:1 reward-to-risk, placed before obvious resistance/support.
+- Avoid trading straight into major levels, during choppy/MIXED conditions, or right before high-impact news.
+- Use the LESSONS the agent learned from its own past trades. They are hard-won; respect them.
+Answer ONLY with JSON:
+{{"action": "BUY|SELL|HOLD", "confidence": 0-100, "sl": price, "tp": price, "reason": "max 60 words", "setup": "short name of the setup"}}
+For HOLD, sl and tp can be null."""
+
+
+def build_context(mkt, account, positions, news_text, lessons, recent):
+    return "\n".join([
+        f"ACCOUNT: balance {account['balance']:.2f}, equity {account['equity']:.2f}. Open positions: {json.dumps(positions) if positions else 'none'}",
+        f"CURRENT PRICE: bid {mkt['bid']:.2f} ask {mkt['ask']:.2f} (UTC {mkt['time']})",
+        f"NEWS: {news_text}",
+        "MARKET DAILY: " + json.dumps(mkt["d1"]),
+        "MARKET 4H: " + json.dumps(mkt["h4"]),
+        "MARKET 1H: " + json.dumps(mkt["h1"]),
+        "RECENT CLOSED TRADES: " + (json.dumps(recent) if recent else "none yet"),
+        "LESSONS LEARNED:\n" + lessons,
+        "Decide now.",
+    ])
+
+
+def _valid(v, price):
+    try:
+        a = str(v.get("action", "HOLD")).upper()
+        if a not in ("BUY", "SELL"):
+            return "HOLD"
+        sl, tp, conf = float(v["sl"]), float(v["tp"]), float(v.get("confidence", 0))
+        if conf < config.MIN_CONFIDENCE:
+            return "HOLD"
+        if a == "BUY" and sl < price < tp:
+            return a
+        if a == "SELL" and tp < price < sl:
+            return a
+    except (TypeError, ValueError, KeyError):
+        pass
+    return "HOLD"
+
+
+def committee_decide(context, mkt, ask=llm.ask):
+    members = llm.available_members()
+    mid = (mkt["bid"] + mkt["ask"]) / 2
+    votes = []
+    for m in members:
+        js, raw = ask(m, SYSTEM, context)
+        if js is None:
+            votes.append({"member": m["name"], "action": "ERROR", "raw": raw[:300]})
+            continue
+        votes.append({"member": m["name"], "action": _valid(js, mid), "said": js})
+    buys = [v for v in votes if v["action"] == "BUY"]
+    sells = [v for v in votes if v["action"] == "SELL"]
+    decision = {"action": "HOLD", "votes": votes}
+    for side, group, other in (("BUY", buys, sells), ("SELL", sells, buys)):
+        if len(group) >= config.MIN_AGREE and not other:
+            decision.update({
+                "action": side,
+                "sl": statistics.median(float(v["said"]["sl"]) for v in group),
+                "tp": statistics.median(float(v["said"]["tp"]) for v in group),
+                "confidence": statistics.mean(float(v["said"]["confidence"]) for v in group),
+                "reason": " | ".join(f"{v['member']}: {v['said'].get('reason', '')}" for v in group),
+                "setup": group[0]["said"].get("setup", ""),
+            })
+    return decision

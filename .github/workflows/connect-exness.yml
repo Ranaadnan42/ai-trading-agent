@@ -1,0 +1,21 @@
+name: Connect Exness (one-time)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  connect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install metaapi-cloud-sdk
+      - run: python -m agent.setup_metaapi
+        env:
+          METAAPI_TOKEN: ${{ secrets.METAAPI_TOKEN }}
+          EXNESS_LOGIN: ${{ secrets.EXNESS_LOGIN }}
+          EXNESS_PASSWORD: ${{ secrets.EXNESS_PASSWORD }}
+          EXNESS_SERVER: ${{ secrets.EXNESS_SERVER }}
