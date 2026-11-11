@@ -225,7 +225,9 @@ class MT5Broker:
         ok = False
         for attempt in range(4):
             # attach to the (already running) terminal first, then log in separately
-            if mt5.initialize(path=path, timeout=90_000, portable=True):
+            # attempts 0,2: attach to the running terminal; 1,3: let the package start it
+            kw = {} if attempt % 2 == 0 else {"path": path, "portable": True}
+            if mt5.initialize(timeout=90_000, **kw):
                 ok = mt5.login(login, password=pwd, server=server, timeout=90_000)
                 if ok:
                     break

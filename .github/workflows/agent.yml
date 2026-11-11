@@ -49,7 +49,7 @@ jobs:
         if: env.MODE == 'mt5'
         shell: pwsh
         run: |
-          pip install MetaTrader5
+          pip install MetaTrader5==5.0.5640
           $urls = @(
             "https://download.mql5.com/cdn/web/exness.technology.ltd/mt5/exness5setup.exe",
             "https://download.mql5.com/cdn/web/exness.global.limited/mt5/exness5setup.exe",
