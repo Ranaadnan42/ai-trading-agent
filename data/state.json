@@ -1,5 +1,6 @@
 {
   "paper_balance": 10000.0,
   "open": [],
-  "next_id": 1
+  "next_id": 1,
+  "live_open": {}
 }
