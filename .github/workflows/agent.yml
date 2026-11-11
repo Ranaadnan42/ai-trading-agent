@@ -8,6 +8,10 @@ on:
       mode:
         description: "paper | mt5 (blank = AGENT_MODE variable)"
         default: ""
+      selftest:
+        description: "Open and close a 0.01 lot demo trade to test execution"
+        type: boolean
+        default: false
 
 concurrency:
   group: trading-agent
@@ -18,13 +22,13 @@ permissions:
 
 jobs:
   run:
-    runs-on: ${{ (inputs.mode || vars.AGENT_MODE || 'paper') == 'mt5' && 'windows-latest' || 'ubuntu-latest' }}
+    runs-on: ${{ (inputs.mode || vars.AGENT_MODE || 'mt5') == 'mt5' && 'windows-latest' || 'ubuntu-latest' }}
     timeout-minutes: 20
     defaults:
       run:
         shell: bash
     env:
-      MODE: ${{ inputs.mode || vars.AGENT_MODE || 'paper' }}
+      MODE: ${{ inputs.mode || vars.AGENT_MODE || 'mt5' }}
       SYMBOL: ${{ vars.SYMBOL || 'XAUUSD' }}
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
@@ -82,23 +86,28 @@ jobs:
           Write-Host "mql logs:" (Get-ChildItem "$root\MQL5\Logs" -ErrorAction SilentlyContinue | ForEach-Object Name)
           Start-Sleep 5
           Remove-Item $ini
-          New-Item -ItemType Directory -Force data\debug | Out-Null
-          Start-Sleep 30
-          Write-Host "state.txt found at:" (Get-ChildItem C:\, D:\ -Recurse -Filter state.txt -ErrorAction SilentlyContinue | Where-Object FullName -notmatch "\\a\\" | ForEach-Object FullName)
-          Write-Host "EA logs:" (Get-ChildItem C:\ -Recurse -Filter *.log -ErrorAction SilentlyContinue | Where-Object { $_.FullName -match "MQL5\\Logs" } | ForEach-Object FullName)
-          Get-ChildItem C:\ -Recurse -Filter *.log -ErrorAction SilentlyContinue | Where-Object { $_.FullName -match "MQL5\\Logs" } | Copy-Item -Destination data\debug\ -ErrorAction SilentlyContinue
-          Add-Type -AssemblyName System.Windows.Forms, System.Drawing
-          $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
-          $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
-          [System.Drawing.Graphics]::FromImage($bmp).CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
-          $bmp.Save("data\debug\mt5-screen.png")
-          Copy-Item "$root\logs\*.log" data\debug\ -ErrorAction SilentlyContinue
-                    Get-ChildItem "$root\Config" -Filter *.ini | Where-Object Name -ne "accounts.ini" | Copy-Item -Destination data\debug\ -ErrorAction SilentlyContinue
-          Remove-Item data\debug\*.ini -Include *acc* -ErrorAction SilentlyContinue
           Get-Process | Where-Object { $_.MainWindowTitle } | ForEach-Object { Write-Host "WINDOW $($_.MainWindowTitle)" }
           if (Test-Path $state) { Get-Content $state | Where-Object { $_ -notmatch "^(login)=" } } else { Write-Host "EA state file not found yet" }
           Get-ChildItem "$root\MQL5\Logs", "$root\logs" -Filter *.log -ErrorAction SilentlyContinue | ForEach-Object {
             Write-Host "== $($_.Name)"; Get-Content $_.FullName -Encoding Unicode -Tail 15 }
+      - name: Execution self-test (0.01 lot open + close)
+        if: inputs.selftest && env.MODE == 'mt5'
+        run: |
+          python - <<'PY'
+          import time
+          from agent import broker
+          b = broker.MT5Broker({})
+          p = b.price()
+          pos = b.open("BUY", 0.01, p["ask"] - 20, p["ask"] + 20, "selftest")
+          print("opened", pos)
+          time.sleep(3)
+          b.modify_sl(pos["id"], p["ask"] - 25)
+          print("modified", [x for x in b.positions() if x["id"] == pos["id"]])
+          print("closed", b.close_position(pos["id"]))
+          time.sleep(3)
+          print("closed trades", b.sync_closed())
+          print("account", b.account())
+          PY
       - name: Agent cycle
         run: python -m agent.run
       - name: Save memory (journal, lessons, state)

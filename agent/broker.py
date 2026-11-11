@@ -102,6 +102,9 @@ class PaperBroker:
         self.state["open"] = still
         return closed
 
+    def close_position(self, pos_id):
+        return self._cmd("close", pos_id)
+
     def close(self):
         pass
 

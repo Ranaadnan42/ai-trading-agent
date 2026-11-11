@@ -143,6 +143,24 @@ string RunCommand(string line)
       bool ok = Send(rq);
       return StringFormat("%s|%s|%u|%s", id, ok ? "ok" : "err", g_rc, g_rcs);
    }
+   if(cmd == "close" && n >= 3)
+   {
+      ulong tk = (ulong)StringToInteger(f[2]);
+      if(!PositionSelectByTicket(tk)) return id + "|err|0|position not found";
+      MqlTradeRequest rq;
+      ZeroMemory(rq);
+      bool buy = PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY;
+      rq.action = TRADE_ACTION_DEAL;
+      rq.position = tk;
+      rq.volume = PositionGetDouble(POSITION_VOLUME);
+      rq.type = buy ? ORDER_TYPE_SELL : ORDER_TYPE_BUY;
+      rq.price = SymbolInfoDouble(g_sym, buy ? SYMBOL_BID : SYMBOL_ASK);
+      rq.deviation = 30;
+      rq.type_filling = Filling();
+      if(Send(rq))
+         return StringFormat("%s|ok|%I64u|%.5f", id, g_order, g_price);
+      return StringFormat("%s|err|%u|%s", id, g_rc, g_rcs);
+   }
    if(cmd == "deals" && n >= 3)
    {
       string out = id + "|ok";
