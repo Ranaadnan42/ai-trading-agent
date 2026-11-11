@@ -68,7 +68,18 @@ jobs:
           Start-Process "$root\metaeditor64.exe" -ArgumentList "/portable", "/compile:`"$exp\AgentBridge.mq5`"", "/log:`"$env:RUNNER_TEMP\compile.log`"" -Wait
           Get-Content "$env:RUNNER_TEMP\compile.log" -Encoding Unicode -ErrorAction SilentlyContinue | Select-Object -Last 8
           if (-not (Test-Path "$exp\AgentBridge.ex5")) { throw "AgentBridge EA did not compile" }
-          # log in and attach the EA to a chart
+          # attach the EA to the default chart (profile file), the [StartUp] key is ignored here
+          $chr = Get-ChildItem "$root\Profiles\Charts" -Recurse -Filter *.chr -ErrorAction SilentlyContinue | Select-Object -First 1
+          Write-Host "chart file: $($chr.FullName)"
+          if ($chr) {
+            $c = Get-Content $chr.FullName -Raw -Encoding Unicode
+            $c = [regex]::Replace($c, "(?s)<expert>.*?</expert>\r?\n?", "")
+            $exp_block = "<expert>`r`nname=AgentBridge`r`npath=Experts\AgentBridge.ex5`r`nexpertmode=5`r`n<inputs>`r`n</inputs>`r`n</expert>`r`n"
+            $i = $c.LastIndexOf("</chart>")
+            $c = $c.Substring(0, $i) + $exp_block + $c.Substring($i)
+            Set-Content $chr.FullName $c -Encoding Unicode -NoNewline
+          }
+          # log in
           if (-not $env:MT5_CHART_SYMBOL) { $env:MT5_CHART_SYMBOL = "XAUUSDm" }
           $ini = "$env:RUNNER_TEMP\mt5login.ini"
           @("[Common]", "Login=$env:EXNESS_LOGIN", "Password=$env:EXNESS_PASSWORD", "Server=$env:EXNESS_SERVER",
