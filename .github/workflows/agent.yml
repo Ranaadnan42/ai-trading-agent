@@ -86,6 +86,11 @@ jobs:
             }
           }
           Remove-Item $ini
+          Write-Host "--- processes with windows:"
+          Get-Process | Where-Object { $_.MainWindowTitle } | ForEach-Object { Write-Host "  $($_.ProcessName): $($_.MainWindowTitle)" }
+          Write-Host "--- terminal64 running:" ((Get-Process terminal64 -ErrorAction SilentlyContinue | Measure-Object).Count)
+          Write-Host "--- session:" ([System.Diagnostics.Process]::GetCurrentProcess().SessionId) "interactive:" ([Environment]::UserInteractive)
+          Get-ChildItem (Split-Path $t.FullName) -Directory | ForEach-Object { Write-Host "  dir: $($_.Name)" }
           Add-Type -AssemblyName System.Windows.Forms, System.Drawing
           $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
           $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
@@ -93,7 +98,7 @@ jobs:
           New-Item -ItemType Directory -Force "$env:RUNNER_TEMP\shots" | Out-Null
           $bmp.Save("$env:RUNNER_TEMP\shots\mt5.png")
           Get-ChildItem (Split-Path $t.FullName) -Recurse -Filter *.log -ErrorAction SilentlyContinue |
-            Where-Object { $_.FullName -match "\\logs\\" } | ForEach-Object { Write-Host "== $($_.FullName)"; Get-Content $_.FullName -Encoding Unicode -Tail 25 }
+            Where-Object { $_.FullName -match "\\logs\\" } | ForEach-Object { Write-Host "== $($_.FullName)"; Get-Content $_.FullName -Tail 40 }
       - name: Agent cycle
         run: python -m agent.run
       - name: Screenshot of MT5 runner desktop
