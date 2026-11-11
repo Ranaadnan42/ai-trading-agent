@@ -69,6 +69,14 @@ jobs:
           Get-Process terminal64 -ErrorAction SilentlyContinue | Stop-Process -Force
           "MT5_PATH=$($t.FullName)" | Out-File -Append $env:GITHUB_ENV
           Write-Host "MT5 installed at $($t.FullName)"
+          $ini = "$env:RUNNER_TEMP\mt5login.ini"
+          @("[Common]", "Login=$env:EXNESS_LOGIN", "Password=$env:EXNESS_PASSWORD", "Server=$env:EXNESS_SERVER",
+            "KeepPrivate=1", "NewsEnable=0", "[Experts]", "AllowLiveTrading=1", "Enabled=1") | Out-File -Encoding ascii $ini
+          Start-Process $t.FullName -ArgumentList "/portable", "/config:$ini"
+          Start-Sleep 90
+          Remove-Item $ini
+          Get-ChildItem (Split-Path $t.FullName) -Recurse -Filter *.log -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -match "\\logs\\" } | ForEach-Object { Write-Host "== $($_.FullName)"; Get-Content $_.FullName -Encoding Unicode -Tail 25 }
       - name: Agent cycle
         run: python -m agent.run
       - name: Save memory (journal, lessons, state)

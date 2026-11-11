@@ -224,7 +224,7 @@ class MT5Broker:
         login, pwd, server = int(os.environ["EXNESS_LOGIN"]), os.environ["EXNESS_PASSWORD"], os.environ["EXNESS_SERVER"]
         ok = False
         for attempt in range(5):
-            ok = mt5.initialize(path=path, login=login, password=pwd, server=server, timeout=120_000)
+            ok = mt5.initialize(path=path, login=login, password=pwd, server=server, timeout=120_000, portable=True)
             if ok:
                 break
             print("MT5 init failed, retrying:", mt5.last_error())
