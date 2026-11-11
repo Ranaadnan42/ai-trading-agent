@@ -69,17 +69,20 @@ jobs:
           Get-Content "$env:RUNNER_TEMP\compile.log" -Encoding Unicode -ErrorAction SilentlyContinue | Select-Object -Last 8
           if (-not (Test-Path "$exp\AgentBridge.ex5")) { throw "AgentBridge EA did not compile" }
           # log in and attach the EA to a chart
+          if (-not $env:MT5_CHART_SYMBOL) { $env:MT5_CHART_SYMBOL = "XAUUSDm" }
           $ini = "$env:RUNNER_TEMP\mt5login.ini"
           @("[Common]", "Login=$env:EXNESS_LOGIN", "Password=$env:EXNESS_PASSWORD", "Server=$env:EXNESS_SERVER",
             "KeepPrivate=1", "NewsEnable=0",
             "[Experts]", "AllowLiveTrading=1", "AllowDllImport=0", "Enabled=1", "Account=0", "Profile=0",
-            "[StartUp]", "Expert=AgentBridge", "Symbol=EURUSD", "Period=H1") | Out-File -Encoding ascii $ini
+            "[StartUp]", "Expert=AgentBridge", "Symbol=$env:MT5_CHART_SYMBOL", "Period=H1") | Out-File -Encoding ascii $ini
           Start-Process $t.FullName -ArgumentList "/portable", "/config:$ini"
           $state = "$root\MQL5\Files\state.txt"
           for ($i = 0; $i -lt 60 -and -not (Test-Path $state); $i++) { Start-Sleep 3 }
+          Write-Host "files:" (Get-ChildItem "$root\MQL5\Files" -ErrorAction SilentlyContinue | ForEach-Object Name)
+          Write-Host "mql logs:" (Get-ChildItem "$root\MQL5\Logs" -ErrorAction SilentlyContinue | ForEach-Object Name)
           Start-Sleep 5
           Remove-Item $ini
-          Get-Process | Where-Object { $_.MainWindowTitle } | ForEach-Object { Write-Host "window: $($_.MainWindowTitle)" }
+          Get-Process | Where-Object { $_.MainWindowTitle } | ForEach-Object { Write-Host "WINDOW $($_.MainWindowTitle)" }
           if (Test-Path $state) { Get-Content $state | Where-Object { $_ -notmatch "^(login)=" } } else { Write-Host "EA state file not found yet" }
           Get-ChildItem "$root\MQL5\Logs", "$root\logs" -Filter *.log -ErrorAction SilentlyContinue | ForEach-Object {
             Write-Host "== $($_.Name)"; Get-Content $_.FullName -Encoding Unicode -Tail 15 }
