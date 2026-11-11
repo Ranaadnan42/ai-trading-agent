@@ -9,7 +9,7 @@ def _f(name, default):
         return float(default)
 
 
-# paper = virtual money on real prices | metaapi = Exness MT5 account through MetaApi
+# paper = virtual money on real prices | mt5 = Exness MT5 directly | metaapi = via MetaApi
 MODE = os.getenv("MODE", "paper").strip().lower()
 SYMBOL = os.getenv("SYMBOL", "XAUUSD")          # Exness standard demo may need "XAUUSDm"
 PAPER_DATA_TICKER = os.getenv("PAPER_DATA_TICKER", "GC=F")  # Yahoo gold futures for paper mode

@@ -1,7 +1,8 @@
 """Broker adapters. Both expose the same small interface so the agent doesn't care which one runs.
 
 PaperBroker  : virtual account, real gold prices from Yahoo (GC=F). Used until Exness demo is connected.
-MetaApiBroker: real Exness MT5 (demo first) through MetaApi cloud - works from GitHub Actions (no Windows).
+MT5Broker    : Exness MT5 directly (terminal installed on the GitHub Windows runner each run).
+MetaApiBroker: Exness MT5 through MetaApi cloud (optional alternative).
 """
 import asyncio
 import os
@@ -205,8 +206,148 @@ class MetaApiBroker:
         except Exception:
             pass
 
+# --------------------------------------------------------------------------- mt5 (direct)
+class MT5Broker:
+    """Exness MT5 directly: the terminal is installed on the GitHub Windows runner each run,
+    and the official MetaTrader5 Python package logs in and trades. No third-party service."""
+    name = "mt5"
+    MAGIC = 420042
+
+    def __init__(self, state):
+        import glob
+        import time
+
+        import MetaTrader5 as mt5
+
+        self.mt5, self.state = mt5, state
+        path = os.getenv("MT5_PATH") or next(iter(glob.glob(r"C:\Program Files\*\terminal64.exe")), None)
+        login, pwd, server = int(os.environ["EXNESS_LOGIN"]), os.environ["EXNESS_PASSWORD"], os.environ["EXNESS_SERVER"]
+        ok = False
+        for attempt in range(5):
+            ok = mt5.initialize(path=path, login=login, password=pwd, server=server, timeout=120_000)
+            if ok:
+                break
+            print("MT5 init failed, retrying:", mt5.last_error())
+            mt5.shutdown()
+            time.sleep(10)
+        if not ok:
+            raise RuntimeError(f"MT5 login failed: {mt5.last_error()}")
+        info = mt5.account_info()
+        print(f"MT5 connected: login {info.login} on {info.server}, balance {info.balance} {info.currency}")
+        self.symbol = self._resolve_symbol(config.SYMBOL)
+        config.SYMBOL = self.symbol
+        self.info = mt5.symbol_info(self.symbol)
+        self._df = None
+        state.setdefault("live_open", {})
+
+    def _resolve_symbol(self, want):
+        mt5 = self.mt5
+        if mt5.symbol_info(want) is None:
+            cands = [s.name for s in (mt5.symbols_get("*XAUUSD*") or [])]
+            if not cands:
+                raise RuntimeError("Gold symbol not found on this account")
+            want = sorted(cands, key=len)[0]  # e.g. XAUUSDm on Exness Standard
+        mt5.symbol_select(want, True)
+        return want
+
+    def candles(self):
+        if self._df is None:
+            rates = self.mt5.copy_rates_from_pos(self.symbol, self.mt5.TIMEFRAME_H1, 0, 1000)
+            if rates is None or len(rates) == 0:
+                print("MT5 candles failed, using Yahoo:", self.mt5.last_error())
+                self._df = _yahoo_candles()
+            else:
+                df = pd.DataFrame(rates)
+                df.index = pd.to_datetime(df["time"], unit="s", utc=True)
+                self._df = df[["open", "high", "low", "close"]].astype(float).sort_index()
+        return self._df
+
+    def price(self):
+        t = self.mt5.symbol_info_tick(self.symbol)
+        return {"bid": t.bid, "ask": t.ask, "time": pd.Timestamp(t.time, unit="s", tz="UTC")}
+
+    def account(self):
+        a = self.mt5.account_info()
+        return {"balance": a.balance, "equity": a.equity}
+
+    def positions(self):
+        out = []
+        for p in self.mt5.positions_get(symbol=self.symbol) or []:
+            known = self.state["live_open"].get(str(p.ticket), {})
+            out.append({
+                "id": str(p.ticket), "side": "BUY" if p.type == self.mt5.POSITION_TYPE_BUY else "SELL",
+                "lots": p.volume, "entry": p.price_open, "sl": p.sl or None, "tp": p.tp or None,
+                "initial_sl": known.get("initial_sl", p.sl), "open_time": str(pd.Timestamp(p.time, unit="s")),
+            })
+        return out
+
+    def lot_limits(self):
+        i = self.info
+        return (i.volume_min, i.volume_max, i.volume_step, i.trade_contract_size)
+
+    def _send(self, req):
+        mt5 = self.mt5
+        res = None
+        for filling in (mt5.ORDER_FILLING_FOK, mt5.ORDER_FILLING_IOC, mt5.ORDER_FILLING_RETURN):
+            res = mt5.order_send({**req, "type_filling": filling})
+            if res is not None and res.retcode == mt5.TRADE_RETCODE_DONE:
+                return res
+            if res is not None and res.retcode != mt5.TRADE_RETCODE_INVALID_FILL:
+                break
+        raise RuntimeError(f"Order failed: {res.retcode if res else mt5.last_error()} {res.comment if res else ''}")
+
+    def open(self, side, lots, sl, tp, comment="ai-agent"):
+        mt5 = self.mt5
+        t = mt5.symbol_info_tick(self.symbol)
+        d = self.info.digits
+        res = self._send({
+            "action": mt5.TRADE_ACTION_DEAL, "symbol": self.symbol, "volume": float(lots),
+            "type": mt5.ORDER_TYPE_BUY if side == "BUY" else mt5.ORDER_TYPE_SELL,
+            "price": t.ask if side == "BUY" else t.bid, "sl": round(sl, d), "tp": round(tp, d),
+            "deviation": 30, "magic": self.MAGIC, "comment": comment[:25],
+            "type_time": mt5.ORDER_TIME_GTC,
+        })
+        pid = str(res.order)
+        pos = {"id": pid, "side": side, "lots": lots, "sl": sl, "tp": tp, "initial_sl": sl,
+               "entry": res.price or (t.ask if side == "BUY" else t.bid), "open_time": memory.iso()}
+        self.state["live_open"][pid] = pos
+        return pos
+
+    def modify_sl(self, pos_id, sl):
+        pos = next((p for p in self.positions() if p["id"] == pos_id), None)
+        if pos:
+            d = self.info.digits
+            self._send({"action": self.mt5.TRADE_ACTION_SLTP, "symbol": self.symbol,
+                        "position": int(pos_id), "sl": round(sl, d), "tp": pos["tp"] or 0.0})
+
+    def sync_closed(self):
+        from datetime import datetime, timedelta, timezone
+
+        live_ids = {p["id"] for p in self.positions()}
+        closed = []
+        for pid, pos in list(self.state["live_open"].items()):
+            if pid in live_ids:
+                continue
+            deals = self.mt5.history_deals_get(position=int(pid)) or []
+            if not deals:
+                now = datetime.now(timezone.utc)
+                deals = [x for x in (self.mt5.history_deals_get(now - timedelta(days=30), now + timedelta(days=1)) or [])
+                         if x.position_id == int(pid)]
+            pnl = sum(x.profit + x.commission + x.swap + getattr(x, "fee", 0) for x in deals)
+            outs = [x for x in deals if x.entry == self.mt5.DEAL_ENTRY_OUT]
+            exit_price = outs[-1].price if outs else pos["entry"]
+            reason = "TP" if pos["tp"] and abs(exit_price - pos["tp"]) < abs(exit_price - pos["sl"]) else "SL"
+            closed.append({**pos, "exit": exit_price, "exit_reason": reason, "pnl": round(pnl, 2)})
+            del self.state["live_open"][pid]
+        return closed
+
+    def close(self):
+        self.mt5.shutdown()
+
 
 def get_broker(state):
+    if config.MODE == "mt5":
+        return MT5Broker(state)
     if config.MODE == "metaapi":
         return MetaApiBroker(state)
     return PaperBroker(state)
