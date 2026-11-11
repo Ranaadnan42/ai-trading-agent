@@ -208,147 +208,138 @@ class MetaApiBroker:
 
 # --------------------------------------------------------------------------- mt5 (direct)
 class MT5Broker:
-    """Exness MT5 directly: the terminal is installed on the GitHub Windows runner each run,
-    and the official MetaTrader5 Python package logs in and trades. No third-party service."""
+    """Exness MT5 directly: the terminal is installed and logged in on the GitHub Windows runner,
+    and our AgentBridge EA inside it trades. Python talks to the EA through text files in
+    MQL5/Files (the MetaTrader5 Python IPC does not work on the hosted runner)."""
     name = "mt5"
-    MAGIC = 420042
 
     def __init__(self, state):
-        import glob
         import time
 
-        import MetaTrader5 as mt5
-
-        self.mt5, self.state = mt5, state
-        path = os.getenv("MT5_PATH") or next(iter(glob.glob(r"C:\Program Files\*\terminal64.exe")), None)
-        login, pwd, server = int(os.environ["EXNESS_LOGIN"]), os.environ["EXNESS_PASSWORD"], os.environ["EXNESS_SERVER"]
-        ok = False
-        for attempt in range(4):
-            # attach to the (already running) terminal first, then log in separately
-            # attempts 0,2: attach to the running terminal; 1,3: let the package start it
-            kw = {} if attempt % 2 == 0 else {"path": path, "portable": True}
-            if mt5.initialize(timeout=90_000, **kw):
-                ok = mt5.login(login, password=pwd, server=server, timeout=90_000)
-                if ok:
-                    break
-                print("MT5 attached but login failed:", mt5.last_error())
-            else:
-                print("MT5 init failed, retrying:", mt5.last_error())
-            mt5.shutdown()
-            time.sleep(10)
-        if not ok:
-            raise RuntimeError(f"MT5 login failed: {mt5.last_error()}")
-        info = mt5.account_info()
-        print(f"MT5 connected: login {info.login} on {info.server}, balance {info.balance} {info.currency}")
-        self.symbol = self._resolve_symbol(config.SYMBOL)
-        config.SYMBOL = self.symbol
-        self.info = mt5.symbol_info(self.symbol)
+        self.state = state
+        term = os.getenv("MT5_PATH") or r"C:\Program Files\MetaTrader 5\terminal64.exe"
+        self.dir = os.path.join(os.path.dirname(term), "MQL5", "Files")
+        self.st = {}
+        for _ in range(90):
+            self.st = self._read_state()
+            if self.st.get("symbol") and float(self.st.get("bid", 0)) > 0 and self.st.get("connected") == "1":
+                break
+            time.sleep(2)
+        else:
+            raise RuntimeError(f"AgentBridge EA not ready, last state: {self.st}")
+        self.symbol = config.SYMBOL = self.st["symbol"]
+        print(f"MT5 connected: login {self.st['login']} on {self.st['server']}, balance {self.st['balance']} "
+              f"{self.st['currency']}, symbol {self.symbol}, trade_allowed={self.st.get('trade_allowed')}")
         self._df = None
         state.setdefault("live_open", {})
 
-    def _resolve_symbol(self, want):
-        mt5 = self.mt5
-        if mt5.symbol_info(want) is None:
-            cands = [s.name for s in (mt5.symbols_get("*XAUUSD*") or [])]
-            if not cands:
-                raise RuntimeError("Gold symbol not found on this account")
-            want = sorted(cands, key=len)[0]  # e.g. XAUUSDm on Exness Standard
-        mt5.symbol_select(want, True)
-        return want
+    def _read_state(self):
+        st, pos = {}, []
+        try:
+            with open(os.path.join(self.dir, "state.txt"), encoding="latin-1") as f:
+                for line in f:
+                    k, _, v = line.strip().partition("=")
+                    if k == "pos":
+                        pos.append(v.split(";"))
+                    elif k:
+                        st[k] = v
+        except OSError:
+            return {}
+        st["_pos"] = pos
+        return st
+
+    def _cmd(self, *parts, timeout=60):
+        import time
+        import uuid
+
+        cid = uuid.uuid4().hex[:8]
+        res_path = os.path.join(self.dir, "res.txt")
+        if os.path.exists(res_path):
+            os.remove(res_path)
+        tmp = os.path.join(self.dir, "cmd.tmp")
+        with open(tmp, "w", encoding="latin-1") as f:
+            f.write("|".join([cid, *map(str, parts)]))
+        os.replace(tmp, os.path.join(self.dir, "cmd.txt"))
+        end = time.time() + timeout
+        while time.time() < end:
+            time.sleep(0.5)
+            try:
+                with open(res_path, encoding="latin-1") as f:
+                    out = f.read().strip().split("|")
+            except OSError:
+                continue
+            if out and out[0] == cid:
+                if out[1] != "ok":
+                    raise RuntimeError(f"MT5 {parts[0]} failed: {'|'.join(out[2:])}")
+                return out[2:]
+        raise RuntimeError(f"MT5 {parts[0]}: no answer from AgentBridge EA")
 
     def candles(self):
         if self._df is None:
-            rates = self.mt5.copy_rates_from_pos(self.symbol, self.mt5.TIMEFRAME_H1, 0, 1000)
-            if rates is None or len(rates) == 0:
-                print("MT5 candles failed, using Yahoo:", self.mt5.last_error())
-                self._df = _yahoo_candles()
-            else:
-                df = pd.DataFrame(rates)
+            try:
+                df = pd.read_csv(os.path.join(self.dir, "rates.csv"))
                 df.index = pd.to_datetime(df["time"], unit="s", utc=True)
                 self._df = df[["open", "high", "low", "close"]].astype(float).sort_index()
+                if len(self._df) < 200:
+                    raise ValueError("too few bars")
+            except Exception as e:
+                print("MT5 candles failed, using Yahoo:", e)
+                self._df = _yahoo_candles()
         return self._df
 
     def price(self):
-        t = self.mt5.symbol_info_tick(self.symbol)
-        return {"bid": t.bid, "ask": t.ask, "time": pd.Timestamp(t.time, unit="s", tz="UTC")}
+        st = self._read_state() or self.st
+        return {"bid": float(st["bid"]), "ask": float(st["ask"]), "time": pd.Timestamp(int(st["time"]), unit="s", tz="UTC")}
 
     def account(self):
-        a = self.mt5.account_info()
-        return {"balance": a.balance, "equity": a.equity}
+        st = self._read_state() or self.st
+        return {"balance": float(st["balance"]), "equity": float(st["equity"])}
 
     def positions(self):
+        st = self._read_state() or self.st
         out = []
-        for p in self.mt5.positions_get(symbol=self.symbol) or []:
-            known = self.state["live_open"].get(str(p.ticket), {})
-            out.append({
-                "id": str(p.ticket), "side": "BUY" if p.type == self.mt5.POSITION_TYPE_BUY else "SELL",
-                "lots": p.volume, "entry": p.price_open, "sl": p.sl or None, "tp": p.tp or None,
-                "initial_sl": known.get("initial_sl", p.sl), "open_time": str(pd.Timestamp(p.time, unit="s")),
-            })
+        for tk, side, vol, entry, sl, tp, t in st.get("_pos", []):
+            known = self.state["live_open"].get(tk, {})
+            sl, tp = float(sl) or None, float(tp) or None
+            out.append({"id": tk, "side": side, "lots": float(vol), "entry": float(entry), "sl": sl, "tp": tp,
+                        "initial_sl": known.get("initial_sl", sl), "open_time": str(pd.Timestamp(int(t), unit="s"))})
         return out
 
     def lot_limits(self):
-        i = self.info
-        return (i.volume_min, i.volume_max, i.volume_step, i.trade_contract_size)
-
-    def _send(self, req):
-        mt5 = self.mt5
-        res = None
-        for filling in (mt5.ORDER_FILLING_FOK, mt5.ORDER_FILLING_IOC, mt5.ORDER_FILLING_RETURN):
-            res = mt5.order_send({**req, "type_filling": filling})
-            if res is not None and res.retcode == mt5.TRADE_RETCODE_DONE:
-                return res
-            if res is not None and res.retcode != mt5.TRADE_RETCODE_INVALID_FILL:
-                break
-        raise RuntimeError(f"Order failed: {res.retcode if res else mt5.last_error()} {res.comment if res else ''}")
+        st = self.st
+        return (float(st["vmin"]), float(st["vmax"]), float(st["vstep"]), float(st["csize"]))
 
     def open(self, side, lots, sl, tp, comment="ai-agent"):
-        mt5 = self.mt5
-        t = mt5.symbol_info_tick(self.symbol)
-        d = self.info.digits
-        res = self._send({
-            "action": mt5.TRADE_ACTION_DEAL, "symbol": self.symbol, "volume": float(lots),
-            "type": mt5.ORDER_TYPE_BUY if side == "BUY" else mt5.ORDER_TYPE_SELL,
-            "price": t.ask if side == "BUY" else t.bid, "sl": round(sl, d), "tp": round(tp, d),
-            "deviation": 30, "magic": self.MAGIC, "comment": comment[:25],
-            "type_time": mt5.ORDER_TIME_GTC,
-        })
-        pid = str(res.order)
-        pos = {"id": pid, "side": side, "lots": lots, "sl": sl, "tp": tp, "initial_sl": sl,
-               "entry": res.price or (t.ask if side == "BUY" else t.bid), "open_time": memory.iso()}
-        self.state["live_open"][pid] = pos
+        d = int(self.st["digits"])
+        ticket, price = self._cmd("open", side, f"{lots:.2f}", round(sl, d), round(tp, d), comment[:25].replace("|", " "))
+        pos = {"id": ticket, "side": side, "lots": lots, "sl": sl, "tp": tp, "initial_sl": sl,
+               "entry": float(price) or self.price()["ask" if side == "BUY" else "bid"], "open_time": memory.iso()}
+        self.state["live_open"][ticket] = pos
         return pos
 
     def modify_sl(self, pos_id, sl):
         pos = next((p for p in self.positions() if p["id"] == pos_id), None)
         if pos:
-            d = self.info.digits
-            self._send({"action": self.mt5.TRADE_ACTION_SLTP, "symbol": self.symbol,
-                        "position": int(pos_id), "sl": round(sl, d), "tp": pos["tp"] or 0.0})
+            d = int(self.st["digits"])
+            self._cmd("modify", pos_id, round(sl, d), round(pos["tp"] or 0.0, d))
 
     def sync_closed(self):
-        from datetime import datetime, timedelta, timezone
-
         live_ids = {p["id"] for p in self.positions()}
         closed = []
         for pid, pos in list(self.state["live_open"].items()):
             if pid in live_ids:
                 continue
-            deals = self.mt5.history_deals_get(position=int(pid)) or []
-            if not deals:
-                now = datetime.now(timezone.utc)
-                deals = [x for x in (self.mt5.history_deals_get(now - timedelta(days=30), now + timedelta(days=1)) or [])
-                         if x.position_id == int(pid)]
-            pnl = sum(x.profit + x.commission + x.swap + getattr(x, "fee", 0) for x in deals)
-            outs = [x for x in deals if x.entry == self.mt5.DEAL_ENTRY_OUT]
-            exit_price = outs[-1].price if outs else pos["entry"]
+            deals = [x.split(";") for x in self._cmd("deals", pid)]
+            pnl = sum(float(x[2]) + float(x[3]) + float(x[4]) + float(x[5]) for x in deals)
+            outs = [x for x in deals if x[0] in ("1", "2")]  # DEAL_ENTRY_OUT / INOUT
+            exit_price = float(outs[-1][1]) if outs else pos["entry"]
             reason = "TP" if pos["tp"] and abs(exit_price - pos["tp"]) < abs(exit_price - pos["sl"]) else "SL"
             closed.append({**pos, "exit": exit_price, "exit_reason": reason, "pnl": round(pnl, 2)})
             del self.state["live_open"][pid]
         return closed
 
     def close(self):
-        self.mt5.shutdown()
+        pass
 
 
 def get_broker(state):

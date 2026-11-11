@@ -45,23 +45,11 @@ jobs:
       - run: pip install -r requirements.txt
       - if: env.MODE == 'metaapi'
         run: pip install metaapi-cloud-sdk
-      - name: Install Exness MT5 terminal
+      - name: Install Exness MT5 terminal + AgentBridge EA
         if: env.MODE == 'mt5'
         shell: pwsh
         run: |
-          pip install MetaTrader5==5.0.5640
-          $urls = @(
-            "https://download.mql5.com/cdn/web/exness.technology.ltd/mt5/exness5setup.exe",
-            "https://download.mql5.com/cdn/web/exness.global.limited/mt5/exness5setup.exe",
-            "https://download.mql5.com/cdn/web/exness.ltd/mt5/exness5setup.exe",
-            "https://download.mql5.com/cdn/web/metaquotes.software.corp/mt5/mt5setup.exe"
-          )
-          $ok = $false
-          foreach ($u in $urls) {
-            try { Invoke-WebRequest $u -OutFile "$env:RUNNER_TEMP\mt5setup.exe"; Write-Host "Downloaded $u"; $ok = $true; break }
-            catch { Write-Host "Not found: $u" }
-          }
-          if (-not $ok) { throw "Could not download MT5 installer" }
+          Invoke-WebRequest "https://download.mql5.com/cdn/web/metaquotes.software.corp/mt5/mt5setup.exe" -OutFile "$env:RUNNER_TEMP\mt5setup.exe"
           Start-Process "$env:RUNNER_TEMP\mt5setup.exe" -ArgumentList "/auto"
           for ($i = 0; $i -lt 60; $i++) {
             $t = Get-ChildItem "C:\Program Files" -Recurse -Filter terminal64.exe -ErrorAction SilentlyContinue | Select-Object -First 1
@@ -71,45 +59,32 @@ jobs:
           if (-not $t) { throw "MT5 terminal did not install" }
           Start-Sleep 20
           Get-Process terminal64 -ErrorAction SilentlyContinue | Stop-Process -Force
+          $root = Split-Path $t.FullName
           "MT5_PATH=$($t.FullName)" | Out-File -Append $env:GITHUB_ENV
-          Write-Host "MT5 installed at $($t.FullName)"
+          # compile our bridge EA
+          $exp = "$root\MQL5\Experts"
+          New-Item -ItemType Directory -Force $exp | Out-Null
+          Copy-Item mt5\AgentBridge.mq5 $exp\
+          Start-Process "$root\metaeditor64.exe" -ArgumentList "/portable", "/compile:`"$exp\AgentBridge.mq5`"", "/log:`"$env:RUNNER_TEMP\compile.log`"" -Wait
+          Get-Content "$env:RUNNER_TEMP\compile.log" -Encoding Unicode -ErrorAction SilentlyContinue | Select-Object -Last 8
+          if (-not (Test-Path "$exp\AgentBridge.ex5")) { throw "AgentBridge EA did not compile" }
+          # log in and attach the EA to a chart
           $ini = "$env:RUNNER_TEMP\mt5login.ini"
           @("[Common]", "Login=$env:EXNESS_LOGIN", "Password=$env:EXNESS_PASSWORD", "Server=$env:EXNESS_SERVER",
-            "KeepPrivate=1", "NewsEnable=0", "[Experts]", "AllowLiveTrading=1", "Enabled=1") | Out-File -Encoding ascii $ini
+            "KeepPrivate=1", "NewsEnable=0",
+            "[Experts]", "AllowLiveTrading=1", "AllowDllImport=0", "Enabled=1", "Account=0", "Profile=0",
+            "[StartUp]", "Expert=AgentBridge", "Symbol=EURUSD", "Period=H1") | Out-File -Encoding ascii $ini
           Start-Process $t.FullName -ArgumentList "/portable", "/config:$ini"
-          # First run pops an "Open an Account" wizard that blocks the Python IPC; close it.
-          $sh = New-Object -ComObject WScript.Shell
-          for ($i = 0; $i -lt 18; $i++) {
-            Start-Sleep 5
-            foreach ($w in @("Open an Account", "Login to Trade Account", "Open an account")) {
-              if ($sh.AppActivate($w)) { Start-Sleep 1; $sh.SendKeys("{ESC}"); Write-Host "Closed dialog: $w" }
-            }
-          }
+          $state = "$root\MQL5\Files\state.txt"
+          for ($i = 0; $i -lt 60 -and -not (Test-Path $state); $i++) { Start-Sleep 3 }
+          Start-Sleep 5
           Remove-Item $ini
-          Write-Host "--- processes with windows:"
-          Get-Process | Where-Object { $_.MainWindowTitle } | ForEach-Object { Write-Host "  $($_.ProcessName): $($_.MainWindowTitle)" }
-          Write-Host "--- terminal64 running:" ((Get-Process terminal64 -ErrorAction SilentlyContinue | Measure-Object).Count)
-          Write-Host "--- session:" ([System.Diagnostics.Process]::GetCurrentProcess().SessionId) "interactive:" ([Environment]::UserInteractive)
-          Get-ChildItem (Split-Path $t.FullName) -Directory | ForEach-Object { Write-Host "  dir: $($_.Name)" }
-          Write-Host "--- python IPC test from this step:"
-          python -c "import MetaTrader5 as m; ok=m.initialize(timeout=60000); print('init', ok, m.last_error()); print('ver', m.version()); ti=m.terminal_info(); print('trade_allowed', ti and ti.trade_allowed, 'connected', ti and ti.connected)"
-          Add-Type -AssemblyName System.Windows.Forms, System.Drawing
-          $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
-          $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
-          [System.Drawing.Graphics]::FromImage($bmp).CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
-          New-Item -ItemType Directory -Force "$env:RUNNER_TEMP\shots" | Out-Null
-          $bmp.Save("$env:RUNNER_TEMP\shots\mt5.png")
-          Get-ChildItem (Split-Path $t.FullName) -Recurse -Filter *.log -ErrorAction SilentlyContinue |
-            Where-Object { $_.FullName -match "\\logs\\" } | ForEach-Object { Write-Host "== $($_.FullName)"; (Get-Content $_.FullName -Raw -Encoding Unicode) -split "`n" | Select-Object -Last 30 | ForEach-Object { Write-Host "LOG $_" } }
+          Get-Process | Where-Object { $_.MainWindowTitle } | ForEach-Object { Write-Host "window: $($_.MainWindowTitle)" }
+          if (Test-Path $state) { Get-Content $state | Where-Object { $_ -notmatch "^(login)=" } } else { Write-Host "EA state file not found yet" }
+          Get-ChildItem "$root\MQL5\Logs", "$root\logs" -Filter *.log -ErrorAction SilentlyContinue | ForEach-Object {
+            Write-Host "== $($_.Name)"; Get-Content $_.FullName -Encoding Unicode -Tail 15 }
       - name: Agent cycle
         run: python -m agent.run
-      - name: Screenshot of MT5 runner desktop
-        if: always() && env.MODE == 'mt5'
-        uses: actions/upload-artifact@v4
-        with:
-          name: mt5-screen
-          path: ${{ runner.temp }}/shots
-          retention-days: 3
       - name: Save memory (journal, lessons, state)
         if: always()
         run: |
