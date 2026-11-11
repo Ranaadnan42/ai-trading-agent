@@ -4,6 +4,10 @@ on:
   schedule:
     - cron: "7 * * * 0-5"   # every hour, Sun-Fri (gold market hours)
   workflow_dispatch:
+    inputs:
+      mode:
+        description: "paper | mt5 (blank = AGENT_MODE variable)"
+        default: ""
 
 concurrency:
   group: trading-agent
@@ -14,13 +18,13 @@ permissions:
 
 jobs:
   run:
-    runs-on: ${{ (vars.AGENT_MODE || 'paper') == 'mt5' && 'windows-latest' || 'ubuntu-latest' }}
+    runs-on: ${{ (inputs.mode || vars.AGENT_MODE || 'paper') == 'mt5' && 'windows-latest' || 'ubuntu-latest' }}
     timeout-minutes: 20
     defaults:
       run:
         shell: bash
     env:
-      MODE: ${{ vars.AGENT_MODE || 'paper' }}
+      MODE: ${{ inputs.mode || vars.AGENT_MODE || 'paper' }}
       SYMBOL: ${{ vars.SYMBOL || 'XAUUSD' }}
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
@@ -73,12 +77,32 @@ jobs:
           @("[Common]", "Login=$env:EXNESS_LOGIN", "Password=$env:EXNESS_PASSWORD", "Server=$env:EXNESS_SERVER",
             "KeepPrivate=1", "NewsEnable=0", "[Experts]", "AllowLiveTrading=1", "Enabled=1") | Out-File -Encoding ascii $ini
           Start-Process $t.FullName -ArgumentList "/portable", "/config:$ini"
-          Start-Sleep 90
+          # First run pops an "Open an Account" wizard that blocks the Python IPC; close it.
+          $sh = New-Object -ComObject WScript.Shell
+          for ($i = 0; $i -lt 18; $i++) {
+            Start-Sleep 5
+            foreach ($w in @("Open an Account", "Login to Trade Account", "Open an account")) {
+              if ($sh.AppActivate($w)) { Start-Sleep 1; $sh.SendKeys("{ESC}"); Write-Host "Closed dialog: $w" }
+            }
+          }
           Remove-Item $ini
+          Add-Type -AssemblyName System.Windows.Forms, System.Drawing
+          $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+          $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
+          [System.Drawing.Graphics]::FromImage($bmp).CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
+          New-Item -ItemType Directory -Force "$env:RUNNER_TEMP\shots" | Out-Null
+          $bmp.Save("$env:RUNNER_TEMP\shots\mt5.png")
           Get-ChildItem (Split-Path $t.FullName) -Recurse -Filter *.log -ErrorAction SilentlyContinue |
             Where-Object { $_.FullName -match "\\logs\\" } | ForEach-Object { Write-Host "== $($_.FullName)"; Get-Content $_.FullName -Encoding Unicode -Tail 25 }
       - name: Agent cycle
         run: python -m agent.run
+      - name: Screenshot of MT5 runner desktop
+        if: always() && env.MODE == 'mt5'
+        uses: actions/upload-artifact@v4
+        with:
+          name: mt5-screen
+          path: ${{ runner.temp }}/shots
+          retention-days: 3
       - name: Save memory (journal, lessons, state)
         if: always()
         run: |

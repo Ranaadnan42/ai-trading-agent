@@ -223,11 +223,15 @@ class MT5Broker:
         path = os.getenv("MT5_PATH") or next(iter(glob.glob(r"C:\Program Files\*\terminal64.exe")), None)
         login, pwd, server = int(os.environ["EXNESS_LOGIN"]), os.environ["EXNESS_PASSWORD"], os.environ["EXNESS_SERVER"]
         ok = False
-        for attempt in range(5):
-            ok = mt5.initialize(path=path, login=login, password=pwd, server=server, timeout=120_000, portable=True)
-            if ok:
-                break
-            print("MT5 init failed, retrying:", mt5.last_error())
+        for attempt in range(4):
+            # attach to the (already running) terminal first, then log in separately
+            if mt5.initialize(path=path, timeout=90_000, portable=True):
+                ok = mt5.login(login, password=pwd, server=server, timeout=90_000)
+                if ok:
+                    break
+                print("MT5 attached but login failed:", mt5.last_error())
+            else:
+                print("MT5 init failed, retrying:", mt5.last_error())
             mt5.shutdown()
             time.sleep(10)
         if not ok:
