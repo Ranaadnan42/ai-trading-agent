@@ -14,13 +14,13 @@ permissions:
 
 jobs:
   run:
-    runs-on: ${{ (vars.AGENT_MODE || 'mt5') == 'mt5' && 'windows-latest' || 'ubuntu-latest' }}
+    runs-on: ${{ (vars.AGENT_MODE || 'paper') == 'mt5' && 'windows-latest' || 'ubuntu-latest' }}
     timeout-minutes: 20
     defaults:
       run:
         shell: bash
     env:
-      MODE: ${{ vars.AGENT_MODE || 'mt5' }}
+      MODE: ${{ vars.AGENT_MODE || 'paper' }}
       SYMBOL: ${{ vars.SYMBOL || 'XAUUSD' }}
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
