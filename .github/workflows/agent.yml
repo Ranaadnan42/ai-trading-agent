@@ -91,6 +91,8 @@ jobs:
           Write-Host "--- terminal64 running:" ((Get-Process terminal64 -ErrorAction SilentlyContinue | Measure-Object).Count)
           Write-Host "--- session:" ([System.Diagnostics.Process]::GetCurrentProcess().SessionId) "interactive:" ([Environment]::UserInteractive)
           Get-ChildItem (Split-Path $t.FullName) -Directory | ForEach-Object { Write-Host "  dir: $($_.Name)" }
+          Write-Host "--- python IPC test from this step:"
+          python -c "import MetaTrader5 as m; ok=m.initialize(timeout=60000); print('init', ok, m.last_error()); print('ver', m.version()); ti=m.terminal_info(); print('trade_allowed', ti and ti.trade_allowed, 'connected', ti and ti.connected)"
           Add-Type -AssemblyName System.Windows.Forms, System.Drawing
           $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
           $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
@@ -98,7 +100,7 @@ jobs:
           New-Item -ItemType Directory -Force "$env:RUNNER_TEMP\shots" | Out-Null
           $bmp.Save("$env:RUNNER_TEMP\shots\mt5.png")
           Get-ChildItem (Split-Path $t.FullName) -Recurse -Filter *.log -ErrorAction SilentlyContinue |
-            Where-Object { $_.FullName -match "\\logs\\" } | ForEach-Object { Write-Host "== $($_.FullName)"; Get-Content $_.FullName -Tail 40 }
+            Where-Object { $_.FullName -match "\\logs\\" } | ForEach-Object { Write-Host "== $($_.FullName)"; (Get-Content $_.FullName -Raw -Encoding Unicode) -split "`n" | Select-Object -Last 30 | ForEach-Object { Write-Host "LOG $_" } }
       - name: Agent cycle
         run: python -m agent.run
       - name: Screenshot of MT5 runner desktop
