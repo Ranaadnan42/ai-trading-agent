@@ -97,6 +97,16 @@ jobs:
           Write-Host "mql logs:" (Get-ChildItem "$root\MQL5\Logs" -ErrorAction SilentlyContinue | ForEach-Object Name)
           Start-Sleep 5
           Remove-Item $ini
+          New-Item -ItemType Directory -Force data\debug | Out-Null
+          Add-Type -AssemblyName System.Windows.Forms, System.Drawing
+          $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+          $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
+          [System.Drawing.Graphics]::FromImage($bmp).CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
+          $bmp.Save("data\debug\mt5-screen.png")
+          Copy-Item "$root\logs\*.log" data\debug\ -ErrorAction SilentlyContinue
+          Copy-Item $chr.FullName data\debug\ -ErrorAction SilentlyContinue
+          Get-ChildItem "$root\Config" -Filter *.ini | Where-Object Name -ne "accounts.ini" | Copy-Item -Destination data\debug\ -ErrorAction SilentlyContinue
+          Remove-Item data\debug\*.ini -Include *acc* -ErrorAction SilentlyContinue
           Get-Process | Where-Object { $_.MainWindowTitle } | ForEach-Object { Write-Host "WINDOW $($_.MainWindowTitle)" }
           if (Test-Path $state) { Get-Content $state | Where-Object { $_ -notmatch "^(login)=" } } else { Write-Host "EA state file not found yet" }
           Get-ChildItem "$root\MQL5\Logs", "$root\logs" -Filter *.log -ErrorAction SilentlyContinue | ForEach-Object {
