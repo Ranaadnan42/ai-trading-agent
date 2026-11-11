@@ -183,6 +183,7 @@ void CheckCommand()
 
 int OnInit()
 {
+   Print("AgentBridge init, data path: ", TerminalInfoString(TERMINAL_DATA_PATH), " chart ", _Symbol);
    g_sym = ResolveSymbol(InpSymbolHint);
    if(g_sym == "")
    {

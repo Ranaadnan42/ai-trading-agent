@@ -68,21 +68,6 @@ jobs:
           Start-Process "$root\metaeditor64.exe" -ArgumentList "/portable", "/compile:`"$exp\AgentBridge.mq5`"", "/log:`"$env:RUNNER_TEMP\compile.log`"" -Wait
           Get-Content "$env:RUNNER_TEMP\compile.log" -Encoding Unicode -ErrorAction SilentlyContinue | Select-Object -Last 8
           if (-not (Test-Path "$exp\AgentBridge.ex5")) { throw "AgentBridge EA did not compile" }
-          # attach the EA to the default chart (profile file), the [StartUp] key is ignored here
-          $prof = "Default"
-          $cini = Get-Content "$root\Config\common.ini" -Encoding Unicode -ErrorAction SilentlyContinue | Where-Object { $_ -match "^ProfileLast=" }
-          if ($cini) { $prof = ($cini -split "=", 2)[1].Trim() }
-          Write-Host "profiles:" (Get-ChildItem "$root\Profiles\Charts" -Directory | ForEach-Object Name) "| active: $prof"
-          $chr = Get-ChildItem "$root\Profiles\Charts\$prof" -Filter *.chr -ErrorAction SilentlyContinue | Sort-Object Name | Select-Object -First 1
-          Write-Host "chart file: $($chr.FullName)"
-          if ($chr) {
-            $c = Get-Content $chr.FullName -Raw -Encoding Unicode
-            $c = [regex]::Replace($c, "(?s)<expert>.*?</expert>\r?\n?", "")
-            $exp_block = "<expert>`r`nname=AgentBridge`r`npath=Experts\AgentBridge.ex5`r`nexpertmode=5`r`n<inputs>`r`n</inputs>`r`n</expert>`r`n"
-            $i = $c.LastIndexOf("</chart>")
-            $c = $c.Substring(0, $i) + $exp_block + $c.Substring($i)
-            Set-Content $chr.FullName $c -Encoding Unicode -NoNewline
-          }
           # log in
           if (-not $env:MT5_CHART_SYMBOL) { $env:MT5_CHART_SYMBOL = "XAUUSDm" }
           $ini = "$env:RUNNER_TEMP\mt5login.ini"
@@ -98,14 +83,17 @@ jobs:
           Start-Sleep 5
           Remove-Item $ini
           New-Item -ItemType Directory -Force data\debug | Out-Null
+          Start-Sleep 30
+          Write-Host "state.txt found at:" (Get-ChildItem C:\, D:\ -Recurse -Filter state.txt -ErrorAction SilentlyContinue | Where-Object FullName -notmatch "\\a\\" | ForEach-Object FullName)
+          Write-Host "EA logs:" (Get-ChildItem C:\ -Recurse -Filter *.log -ErrorAction SilentlyContinue | Where-Object { $_.FullName -match "MQL5\\Logs" } | ForEach-Object FullName)
+          Get-ChildItem C:\ -Recurse -Filter *.log -ErrorAction SilentlyContinue | Where-Object { $_.FullName -match "MQL5\\Logs" } | Copy-Item -Destination data\debug\ -ErrorAction SilentlyContinue
           Add-Type -AssemblyName System.Windows.Forms, System.Drawing
           $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
           $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
           [System.Drawing.Graphics]::FromImage($bmp).CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
           $bmp.Save("data\debug\mt5-screen.png")
           Copy-Item "$root\logs\*.log" data\debug\ -ErrorAction SilentlyContinue
-          Copy-Item $chr.FullName data\debug\ -ErrorAction SilentlyContinue
-          Get-ChildItem "$root\Config" -Filter *.ini | Where-Object Name -ne "accounts.ini" | Copy-Item -Destination data\debug\ -ErrorAction SilentlyContinue
+                    Get-ChildItem "$root\Config" -Filter *.ini | Where-Object Name -ne "accounts.ini" | Copy-Item -Destination data\debug\ -ErrorAction SilentlyContinue
           Remove-Item data\debug\*.ini -Include *acc* -ErrorAction SilentlyContinue
           Get-Process | Where-Object { $_.MainWindowTitle } | ForEach-Object { Write-Host "WINDOW $($_.MainWindowTitle)" }
           if (Test-Path $state) { Get-Content $state | Where-Object { $_ -notmatch "^(login)=" } } else { Write-Host "EA state file not found yet" }
