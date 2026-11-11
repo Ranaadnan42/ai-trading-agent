@@ -46,7 +46,18 @@ jobs:
         shell: pwsh
         run: |
           pip install MetaTrader5
-          Invoke-WebRequest "https://download.mql5.com/cdn/web/exness.technology.ltd/mt5/exness5setup.exe" -OutFile "$env:RUNNER_TEMP\mt5setup.exe"
+          $urls = @(
+            "https://download.mql5.com/cdn/web/exness.technology.ltd/mt5/exness5setup.exe",
+            "https://download.mql5.com/cdn/web/exness.global.limited/mt5/exness5setup.exe",
+            "https://download.mql5.com/cdn/web/exness.ltd/mt5/exness5setup.exe",
+            "https://download.mql5.com/cdn/web/metaquotes.software.corp/mt5/mt5setup.exe"
+          )
+          $ok = $false
+          foreach ($u in $urls) {
+            try { Invoke-WebRequest $u -OutFile "$env:RUNNER_TEMP\mt5setup.exe"; Write-Host "Downloaded $u"; $ok = $true; break }
+            catch { Write-Host "Not found: $u" }
+          }
+          if (-not $ok) { throw "Could not download MT5 installer" }
           Start-Process "$env:RUNNER_TEMP\mt5setup.exe" -ArgumentList "/auto"
           for ($i = 0; $i -lt 60; $i++) {
             $t = Get-ChildItem "C:\Program Files" -Recurse -Filter terminal64.exe -ErrorAction SilentlyContinue | Select-Object -First 1
