@@ -49,7 +49,7 @@ jobs:
         if: env.MODE == 'mt5'
         shell: pwsh
         run: |
-          Invoke-WebRequest "https://download.mql5.com/cdn/web/metaquotes.software.corp/mt5/mt5setup.exe" -OutFile "$env:RUNNER_TEMP\mt5setup.exe"
+          Invoke-WebRequest "https://download.mql5.com/cdn/web/exness.technologies.ltd/mt5/exness5setup.exe" -OutFile "$env:RUNNER_TEMP\mt5setup.exe"
           Start-Process "$env:RUNNER_TEMP\mt5setup.exe" -ArgumentList "/auto"
           for ($i = 0; $i -lt 60; $i++) {
             $t = Get-ChildItem "C:\Program Files" -Recurse -Filter terminal64.exe -ErrorAction SilentlyContinue | Select-Object -First 1
