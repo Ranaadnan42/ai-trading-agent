@@ -69,7 +69,11 @@ jobs:
           Get-Content "$env:RUNNER_TEMP\compile.log" -Encoding Unicode -ErrorAction SilentlyContinue | Select-Object -Last 8
           if (-not (Test-Path "$exp\AgentBridge.ex5")) { throw "AgentBridge EA did not compile" }
           # attach the EA to the default chart (profile file), the [StartUp] key is ignored here
-          $chr = Get-ChildItem "$root\Profiles\Charts" -Recurse -Filter *.chr -ErrorAction SilentlyContinue | Select-Object -First 1
+          $prof = "Default"
+          $cini = Get-Content "$root\Config\common.ini" -Encoding Unicode -ErrorAction SilentlyContinue | Where-Object { $_ -match "^ProfileLast=" }
+          if ($cini) { $prof = ($cini -split "=", 2)[1].Trim() }
+          Write-Host "profiles:" (Get-ChildItem "$root\Profiles\Charts" -Directory | ForEach-Object Name) "| active: $prof"
+          $chr = Get-ChildItem "$root\Profiles\Charts\$prof" -Filter *.chr -ErrorAction SilentlyContinue | Sort-Object Name | Select-Object -First 1
           Write-Host "chart file: $($chr.FullName)"
           if ($chr) {
             $c = Get-Content $chr.FullName -Raw -Encoding Unicode
