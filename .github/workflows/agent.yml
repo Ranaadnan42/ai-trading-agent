@@ -25,9 +25,9 @@ jobs:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      EXNESS_LOGIN: ${{ secrets.EXNESS_LOGIN }}
+      EXNESS_LOGIN: ${{ secrets.EXNESS_LOGIN || vars.EXNESS_LOGIN || '474902137' }}
       EXNESS_PASSWORD: ${{ secrets.EXNESS_PASSWORD }}
-      EXNESS_SERVER: ${{ secrets.EXNESS_SERVER }}
+      EXNESS_SERVER: ${{ secrets.EXNESS_SERVER || vars.EXNESS_SERVER || 'Exness-MT5Trial15' }}
       METAAPI_TOKEN: ${{ secrets.METAAPI_TOKEN }}
       METAAPI_ACCOUNT_ID: ${{ secrets.METAAPI_ACCOUNT_ID }}
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
