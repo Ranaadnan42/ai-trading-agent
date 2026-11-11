@@ -6,14 +6,35 @@
 //|   cmd.txt    - one command from Python  -> res.txt (answer)        |
 //+------------------------------------------------------------------+
 #property strict
-#include <Trade\Trade.mqh>
 
 input string InpSymbolHint = "XAUUSD";
 input long   InpMagic      = 420042;
 
-CTrade trade;
 string g_sym = "";
 long   g_seq = 0;
+uint   g_rc = 0;
+string g_rcs = "";
+ulong  g_order = 0;
+double g_price = 0;
+
+ENUM_ORDER_TYPE_FILLING Filling()
+{
+   long m = SymbolInfoInteger(g_sym, SYMBOL_FILLING_MODE);
+   if((m & SYMBOL_FILLING_FOK) != 0) return ORDER_FILLING_FOK;
+   if((m & SYMBOL_FILLING_IOC) != 0) return ORDER_FILLING_IOC;
+   return ORDER_FILLING_RETURN;
+}
+
+bool Send(MqlTradeRequest &rq)
+{
+   MqlTradeResult rs;
+   ZeroMemory(rs);
+   rq.magic = InpMagic;
+   rq.symbol = g_sym;
+   bool ok = OrderSend(rq, rs);
+   g_rc = rs.retcode; g_rcs = rs.comment; g_order = rs.order; g_price = rs.price;
+   return ok && (rs.retcode == TRADE_RETCODE_DONE || rs.retcode == TRADE_RETCODE_PLACED);
+}
 
 string ResolveSymbol(string want)
 {
@@ -96,17 +117,31 @@ string RunCommand(string line)
    if(cmd == "open" && n >= 7)
    {
       double vol = StringToDouble(f[3]), sl = NormalizeDouble(StringToDouble(f[4]), d), tp = NormalizeDouble(StringToDouble(f[5]), d);
-      bool ok = f[2] == "BUY" ? trade.Buy(vol, g_sym, 0, sl, tp, f[6]) : trade.Sell(vol, g_sym, 0, sl, tp, f[6]);
-      uint rc = trade.ResultRetcode();
-      if(ok && (rc == TRADE_RETCODE_DONE || rc == TRADE_RETCODE_PLACED))
-         return StringFormat("%s|ok|%I64u|%.5f", id, trade.ResultOrder(), trade.ResultPrice());
-      return StringFormat("%s|err|%u|%s", id, rc, trade.ResultRetcodeDescription());
+      MqlTradeRequest rq;
+      ZeroMemory(rq);
+      bool buy = f[2] == "BUY";
+      rq.action = TRADE_ACTION_DEAL;
+      rq.volume = vol;
+      rq.type = buy ? ORDER_TYPE_BUY : ORDER_TYPE_SELL;
+      rq.price = SymbolInfoDouble(g_sym, buy ? SYMBOL_ASK : SYMBOL_BID);
+      rq.sl = sl; rq.tp = tp; rq.deviation = 30; rq.comment = f[6];
+      rq.type_filling = Filling();
+      rq.type_time = ORDER_TIME_GTC;
+      if(Send(rq))
+         return StringFormat("%s|ok|%I64u|%.5f", id, g_order, g_price);
+      return StringFormat("%s|err|%u|%s", id, g_rc, g_rcs);
    }
    if(cmd == "modify" && n >= 5)
    {
       ulong tk = (ulong)StringToInteger(f[2]);
-      bool ok = trade.PositionModify(tk, NormalizeDouble(StringToDouble(f[3]), d), NormalizeDouble(StringToDouble(f[4]), d));
-      return StringFormat("%s|%s|%u|%s", id, ok ? "ok" : "err", trade.ResultRetcode(), trade.ResultRetcodeDescription());
+      MqlTradeRequest rq;
+      ZeroMemory(rq);
+      rq.action = TRADE_ACTION_SLTP;
+      rq.position = tk;
+      rq.sl = NormalizeDouble(StringToDouble(f[3]), d);
+      rq.tp = NormalizeDouble(StringToDouble(f[4]), d);
+      bool ok = Send(rq);
+      return StringFormat("%s|%s|%u|%s", id, ok ? "ok" : "err", g_rc, g_rcs);
    }
    if(cmd == "deals" && n >= 3)
    {
@@ -154,9 +189,6 @@ int OnInit()
       Print("AgentBridge: gold symbol not found");
       return INIT_FAILED;
    }
-   trade.SetExpertMagicNumber(InpMagic);
-   trade.SetDeviationInPoints(30);
-   trade.SetTypeFillingBySymbol(g_sym);
    FileDelete("cmd.txt");
    FileDelete("res.txt");
    WriteRates();
