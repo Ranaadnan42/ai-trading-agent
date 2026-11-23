@@ -2,16 +2,5 @@
   "paper_balance": 10000.0,
   "open": [],
   "next_id": 1,
-  "live_open": {
-    "2845742891": {
-      "id": "2845742891",
-      "side": "SELL",
-      "lots": 0.01,
-      "sl": 3637.75,
-      "tp": 3582.5,
-      "initial_sl": 3637.75,
-      "entry": 3620.907,
-      "open_time": "2026-11-23T11:13:30Z"
-    }
-  }
+  "live_open": {}
 }
