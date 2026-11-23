@@ -55,3 +55,4 @@
 {"action": "SKIP", "why": "market closed / stale data (4.1h old)", "price": 3620.251, "time": "2026-11-23T10:07:01Z"}
 {"action": "SKIP", "why": "market closed / stale data (5.1h old)", "price": 3620.266, "time": "2026-11-23T11:07:01Z"}
 {"action": "SKIP", "why": "a position is already open", "price": 3620.728, "time": "2026-11-23T12:07:00Z"}
+{"action": "SKIP", "why": "a position is already open", "price": 3617.159, "time": "2026-11-23T13:07:01Z"}
