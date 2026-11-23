@@ -59,3 +59,4 @@
 {"action": "SKIP", "why": "market closed / stale data (4.1h old)", "price": 3667.554, "time": "2026-11-23T15:07:01Z"}
 {"action": "SKIP", "why": "market closed / stale data (5.1h old)", "price": 3665.677, "time": "2026-11-23T16:07:00Z"}
 {"action": "SKIP", "why": "daily loss limit hit (-16.84)", "price": 3666.838, "time": "2026-11-23T16:11:28Z"}
+{"action": "SKIP", "why": "daily loss limit hit (-16.84)", "price": 3664.036, "time": "2026-11-23T17:07:00Z"}
