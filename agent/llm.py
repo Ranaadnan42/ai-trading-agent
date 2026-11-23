@@ -11,7 +11,7 @@ TIMEOUT = 90
 # Committee members. A member without its key is skipped automatically.
 COMMITTEE = [
     {"name": "Gemini", "provider": "gemini", "model": os.getenv("GEMINI_MODEL", "gemini-3.5-flash")},
-    {"name": "Groq-Llama", "provider": "groq", "model": os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")},
+    {"name": "Groq", "provider": "groq", "model": os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")},
     {"name": "OpenRouter", "provider": "openrouter", "model": os.getenv("OPENROUTER_MODEL", "auto-free")},
 ]
 KEYS = {"gemini": "GEMINI_API_KEY", "groq": "GROQ_API_KEY", "openrouter": "OPENROUTER_API_KEY"}
@@ -19,9 +19,9 @@ KEYS = {"gemini": "GEMINI_API_KEY", "groq": "GROQ_API_KEY", "openrouter": "OPENR
 
 # Backups: used only to fill the committee up to 3 when a main member has no key.
 BACKUPS = [
-    {"name": "Groq-Qwen", "provider": "groq", "model": "qwen/qwen3-32b"},
+    {"name": "Groq-Qwen", "provider": "groq", "model": "qwen/qwen3.8-27b"},
     {"name": "Gemini-Lite", "provider": "gemini", "model": "gemini-flash-lite-latest"},
-    {"name": "Groq-GPT-OSS", "provider": "groq", "model": "openai/gpt-oss-120b"},
+    {"name": "Groq-GPT-OSS-20B", "provider": "groq", "model": "openai/gpt-oss-20b"},
 ]
 
 
@@ -111,7 +111,7 @@ def ask(member, system, user, retries=2):
     elif p == "groq":
         live = _groq_live_models(member["model"])
         models = ([member["model"]] if member["model"] in live or not live else []) + \
-                 [m for m in live if m != member["model"]][:2]
+                 [m for m in live if m != member["model"] and "allam" not in m][:3]
     for model in models:
         for attempt in range(retries):
             try:
