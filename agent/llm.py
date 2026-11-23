@@ -54,7 +54,8 @@ def _gemini(model, system, user):
 
 def _openai_style(url, key, model, system, user, extra_headers=None):
     headers = {"Authorization": f"Bearer {key}", **(extra_headers or {})}
-    body = {"model": model, "temperature": 0.2,
+    # max_tokens matters: without it Groq reserves the model maximum and answers 429 "request too large"
+    body = {"model": model, "temperature": 0.2, "max_tokens": 2000,
             "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]}
     r = requests.post(url, headers=headers, json=body, timeout=TIMEOUT)
     if r.status_code >= 400:
