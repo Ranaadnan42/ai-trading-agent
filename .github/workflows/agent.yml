@@ -29,6 +29,8 @@ jobs:
       run:
         shell: bash
     env:
+      # public repo = free minutes -> stay up 5h deciding hourly, then chain; private repo -> one cycle per run
+      LOOP_HOURS: ${{ vars.LOOP_HOURS || (github.event.repository.private && '0' || '5') }}
       MODE: ${{ inputs.mode || vars.AGENT_MODE || 'mt5' }}
       SYMBOL: ${{ vars.SYMBOL || 'XAUUSD' }}
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -117,8 +119,6 @@ jobs:
       - name: Agent cycle
         # LOOP_HOURS (repo variable): 0 = one cycle per run (default).
         # e.g. 5 = keep MT5 open and decide every hour for 5 hours, then hand over to the next run.
-        env:
-          LOOP_HOURS: ${{ vars.LOOP_HOURS || '0' }}
         run: |
           end=$(( $(date +%s) + LOOP_HOURS * 3600 ))
           rc=0
@@ -134,7 +134,7 @@ jobs:
         if: always()
         run: bash .github/save_memory.sh
       - name: Hand over to the next run (loop mode)
-        if: always() && vars.LOOP_HOURS != '' && vars.LOOP_HOURS != '0'
+        if: always() && env.LOOP_HOURS != '0'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
