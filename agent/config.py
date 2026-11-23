@@ -17,6 +17,8 @@ CONTRACT_SIZE = _f("CONTRACT_SIZE", 100)          # 1 lot gold = 100 oz -> $100 
 
 # ---- Risk rules (hard-locked) ----
 RISK_PCT = min(_f("RISK_PCT", 1.0), 2.0)          # % of balance risked per trade, never above 2
+# Smallest lot (0.01 gold = $1 per $1 move) can exceed RISK_PCT on a small account; allow it up to this cap.
+MIN_LOT_MAX_RISK_PCT = min(_f("MIN_LOT_MAX_RISK_PCT", 5.0), 6.0)
 MAX_DAILY_LOSS_PCT = 3.0                          # stop trading for the day after -3%
 MAX_TRADES_PER_DAY = 3
 MAX_OPEN_POSITIONS = 1

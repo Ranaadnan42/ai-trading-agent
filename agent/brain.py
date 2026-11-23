@@ -27,6 +27,9 @@ def build_context(mkt, account, positions, news_text, lessons, recent):
     return "\n".join([
         f"ACCOUNT: balance {account['balance']:.2f}, equity {account['equity']:.2f}. Open positions: {json.dumps(positions) if positions else 'none'}",
         f"CURRENT PRICE: bid {mkt['bid']:.2f} ask {mkt['ask']:.2f} (UTC {mkt['time']})",
+        f"SIZING LIMIT: small account - the stop-loss can be at most "
+        f"{account['balance'] * max(config.RISK_PCT, config.MIN_LOT_MAX_RISK_PCT) / 100 / (0.01 * config.CONTRACT_SIZE):.1f} "
+        f"points from entry (and at least {config.MIN_SL_ATR * mkt['atr']:.1f}). Pick an entry/structure where that fits, else HOLD.",
         f"NEWS: {news_text}",
         "MARKET DAILY: " + json.dumps(mkt["d1"]),
         "MARKET 4H: " + json.dumps(mkt["h4"]),

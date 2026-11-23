@@ -27,7 +27,8 @@ def lot_size(balance, entry, sl, min_lot=0.01, max_lot=100.0, step=0.01, contrac
     lots = math.floor(risk_usd / per_lot / step) * step
     if lots < min_lot:
         # Even the smallest lot would risk too much -> skip unless only slightly over.
-        if min_lot * per_lot > risk_usd * 1.5:
+        # Small accounts: allow the minimum lot while it risks <= MIN_LOT_MAX_RISK_PCT of balance.
+        if min_lot * per_lot > balance * config.MIN_LOT_MAX_RISK_PCT / 100:
             return 0.0, 0.0
         lots = min_lot
     lots = round(min(lots, max_lot), 2)
