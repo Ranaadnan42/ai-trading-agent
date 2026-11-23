@@ -12,8 +12,11 @@ from . import config, llm, memory, notify
 SYSTEM = """You are the trading agent doing your nightly self-review. You trade gold swing setups.
 Look at today's trades, the decisions where you held or were rejected, and your current lessons.
 Rewrite your LESSONS playbook: keep what is proven, fix what failed, add new specific lessons, remove vague or
-contradicted ones. Max 20 bullet points, each concrete and actionable (conditions -> what to do).
+contradicted ones. Max 10 bullet points, each concrete and actionable (conditions -> what to do).
 Never suggest increasing risk, removing stop-losses, or breaking hard rules.
+Balance matters: lessons must come from REAL closed trades. If there were few or no trades, do NOT add new
+"do not trade" rules - instead remove or relax rules that blocked reasonable trend trades (an agent that never
+trades cannot learn or earn). Keep at most 10 bullets, and at least half must describe when TO take a trade.
 Reply as JSON: {"lessons": "- bullet\\n- bullet ...", "summary": "2-3 sentence honest summary of today"}"""
 
 

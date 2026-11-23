@@ -25,8 +25,12 @@ BACKUPS = [
 ]
 
 
+def has_key(m):
+    return bool(os.getenv(KEYS[m["provider"]]))
+
+
 def available_members():
-    have = lambda m: bool(os.getenv(KEYS[m["provider"]]))
+    have = has_key
     members = [m for m in COMMITTEE if have(m)]
     for b in BACKUPS:
         if len(members) >= 3:

@@ -7,11 +7,17 @@ from . import config, llm
 SYSTEM = f"""You are one member of a 3-member AI trading committee for {config.SYMBOL} (gold), a swing trader on 1H/4H/Daily charts.
 Your only goal is long-term profit with small drawdowns. Capital protection comes first.
 Rules you must respect:
-- HOLD is the default. Trade only when trend, structure, and momentum clearly line up and the entry is not late/chasing.
+- Trade WITH the higher-timeframe trend (Daily/4H). In a clear trend, good entries are: a pullback to 1H EMA20/EMA50,
+  a break-and-retest of a level, or a 1H continuation candle after a small consolidation. Strong trends stay
+  "overbought/oversold" for a long time, so RSI extremes alone are NOT a reason to skip a trend trade.
+- HOLD only when there is a concrete reason: no clear trend (mixed/choppy), price sits right at a major level
+  against your direction, the stop would have to be unreasonably wide, or high-impact news is imminent.
+- Missing good trades is also a cost. If the trend is clear and a sane SL/TP fits, take the trade; risk is
+  already capped at a small % by the risk engine.
 - Every trade needs a logical stop-loss beyond recent structure (swing high/low), roughly {config.MIN_SL_ATR}-{config.MAX_SL_ATR}x the 1H ATR.
 - Take-profit must give at least {config.MIN_RR}:1 reward-to-risk, placed before obvious resistance/support.
 - Avoid trading straight into major levels, during choppy/MIXED conditions, or right before high-impact news.
-- Use the LESSONS the agent learned from its own past trades. They are hard-won; respect them.
+- Use the LESSONS learned from the agent's own past trades as guidance, not as reasons to never trade.
 Answer ONLY with JSON:
 {{"action": "BUY|SELL|HOLD", "confidence": 0-100, "sl": price, "tp": price, "reason": "max 60 words", "setup": "short name of the setup"}}
 For HOLD, sl and tp can be null."""
@@ -52,8 +58,13 @@ def committee_decide(context, mkt, ask=llm.ask):
     members = llm.available_members()
     mid = (mkt["bid"] + mkt["ask"]) / 2
     votes = []
+    spares = [b for b in llm.BACKUPS if b not in members and llm.has_key(b)]
     for m in members:
         js, raw = ask(m, SYSTEM, context)
+        while js is None and spares:      # member failed (e.g. 429) -> a backup AI takes its seat
+            votes.append({"member": m["name"], "action": "ERROR", "raw": raw[:300]})
+            m = spares.pop(0)
+            js, raw = ask(m, SYSTEM, context)
         if js is None:
             votes.append({"member": m["name"], "action": "ERROR", "raw": raw[:300]})
             continue
