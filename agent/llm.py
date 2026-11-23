@@ -59,7 +59,7 @@ def _openai_style(url, key, model, system, user, extra_headers=None):
             "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]}
     r = requests.post(url, headers=headers, json=body, timeout=TIMEOUT)
     if r.status_code >= 400:
-        raise RuntimeError(f"HTTP {r.status_code}: {r.text[:200]}")
+        raise RuntimeError(f"HTTP {r.status_code}: {r.text[:200]} ... {r.text[200:420]}")
     return r.json()["choices"][0]["message"]["content"]
 
 
@@ -127,7 +127,8 @@ def ask(member, system, user, retries=2):
                                         {"X-Title": "AI Trading Agent"})
                 return parse_json(txt), f"[{model}] {txt}"
             except Exception as e:
-                last_err = f"[{model}] {type(e).__name__}: {str(e)[:200]}"
+                last_err = f"[{model}] {type(e).__name__}: {str(e)[:450]}"
+                print("AI error", member["name"], last_err)
                 time.sleep(3 * (attempt + 1))
     return None, last_err
 
