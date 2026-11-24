@@ -37,6 +37,13 @@ class PaperBroker:
             self._df = _yahoo_candles()
         return self._df
 
+    def candles_tf(self, tf):
+        try:
+            return _yahoo_candles(tf, "60d" if tf == "15m" else "2y")
+        except Exception as e:
+            print(f"Yahoo {tf} candles unavailable:", e)
+            return None
+
     def price(self):
         c = float(self.candles()["close"].iloc[-1])
         h = config.PAPER_SPREAD / 2
@@ -142,6 +149,16 @@ class MetaApiBroker:
                 print("MetaApi candles failed, using Yahoo:", e)
                 self._df = _yahoo_candles()
         return self._df
+
+    def candles_tf(self, tf):
+        try:
+            raw = self._r(self.acc.get_historical_candles(config.SYMBOL, tf, None, 600 if tf == "15m" else 300))
+            df = pd.DataFrame(raw)
+            df.index = pd.to_datetime(df["time"], utc=True)
+            return df[["open", "high", "low", "close"]].astype(float).sort_index()
+        except Exception as e:
+            print(f"MetaApi {tf} candles unavailable:", e)
+            return None
 
     def price(self):
         p = self._r(self.conn.get_symbol_price(config.SYMBOL))
@@ -286,6 +303,18 @@ class MT5Broker:
                 print("MT5 candles failed, using Yahoo:", e)
                 self._df = _yahoo_candles()
         return self._df
+
+    def candles_tf(self, tf):
+        """'15m' or '1d' straight from the EA (exact broker prices). None if not available."""
+        name = {"15m": "rates_m15.csv", "1d": "rates_d1.csv"}.get(tf)
+        try:
+            df = pd.read_csv(os.path.join(self.dir, name))
+            df.index = pd.to_datetime(df["time"], unit="s", utc=True)
+            df = df[["open", "high", "low", "close"]].astype(float).sort_index()
+            return df if len(df) >= 50 else None
+        except Exception as e:
+            print(f"MT5 {tf} candles unavailable:", e)
+            return None
 
     def price(self):
         st = self._read_state() or self.st

@@ -10,22 +10,47 @@ import sys
 
 import pandas as pd
 
-from . import brain, config, llm, memory, news, notify, risk
+from . import brain, config, llm, memory, news, notify, risk, structure
 from .broker import get_broker
 from .indicators import atr, resample, summarize
 
 
+def _tf(broker, tf):
+    try:
+        return broker.candles_tf(tf) if hasattr(broker, "candles_tf") else None
+    except Exception as e:
+        print(f"{tf} candles failed:", e)
+        return None
+
+
+def _with_structure(summary, df, k=3):
+    a = structure.analyze(df, k)
+    if a:
+        summary.update(a)
+    return summary
+
+
 def market_snapshot(broker):
+    """Top-down picture: Daily -> 4H -> 1H -> 15M, each with structure, liquidity, zones, S/R and Bollinger."""
     h1 = broker.candles()
     p = broker.price()
-    return {
+    d1 = _tf(broker, "1d")
+    if d1 is None or len(d1) < 60:
+        d1 = resample(h1, "1D")
+    h4 = resample(h1, "4h")
+    m15 = _tf(broker, "15m")
+    snap = {
         "bid": p["bid"], "ask": p["ask"], "time": str(p["time"]),
-        "h1": summarize(h1, "1H"),
-        "h4": summarize(resample(h1, "4h"), "4H", last_n=8),
-        "d1": summarize(resample(h1, "1D"), "1D", last_n=5),
+        "d1": _with_structure(summarize(d1, "1D", last_n=5), d1, k=2),
+        "h4": _with_structure(summarize(h4, "4H", last_n=8), h4),
+        "h1": _with_structure(summarize(h1, "1H"), h1),
+        "key_levels": structure.session_levels(h1),
         "atr": float(atr(h1).iloc[-1]),
         "last_bar": h1.index[-1],
     }
+    if m15 is not None and len(m15) >= 100:
+        snap["m15"] = _with_structure(summarize(m15, "15M", last_n=8), m15, k=2)
+    return snap
 
 
 def reflect(trade):

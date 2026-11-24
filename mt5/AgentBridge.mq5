@@ -2,7 +2,7 @@
 //| AgentBridge: lets the Python AI agent trade through this terminal |
 //| via plain text files in MQL5\Files (no Python IPC needed).        |
 //|   state.txt  - written every 0.5s: account, price, positions      |
-//|   rates.csv  - H1 candles of the gold symbol                       |
+//|   rates.csv  - H1 candles (+ rates_m15.csv, rates_d1.csv)          |
 //|   cmd.txt    - one command from Python  -> res.txt (answer)        |
 //+------------------------------------------------------------------+
 #property strict
@@ -62,14 +62,21 @@ void WriteText(string name, string text)
    FileMove(tmp, 0, name, FILE_REWRITE);
 }
 
-void WriteRates()
+void WriteRatesTF(ENUM_TIMEFRAMES tf, int bars, string name)
 {
    MqlRates r[];
-   int n = CopyRates(g_sym, PERIOD_H1, 0, 1000, r);
+   int n = CopyRates(g_sym, tf, 0, bars, r);
    string out = "time,open,high,low,close\n";
    for(int i = 0; i < n; i++)
       out += StringFormat("%I64d,%.5f,%.5f,%.5f,%.5f\n", (long)r[i].time, r[i].open, r[i].high, r[i].low, r[i].close);
-   WriteText("rates.csv", out);
+   WriteText(name, out);
+}
+
+void WriteRates()
+{
+   WriteRatesTF(PERIOD_H1, 1000, "rates.csv");
+   WriteRatesTF(PERIOD_M15, 600, "rates_m15.csv");
+   WriteRatesTF(PERIOD_D1, 300, "rates_d1.csv");
 }
 
 void WriteState()
