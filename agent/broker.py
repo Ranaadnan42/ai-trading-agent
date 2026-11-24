@@ -294,6 +294,10 @@ class MT5Broker:
     def candles(self):
         if self._df is None:
             try:
+                self._cmd("rates", timeout=30)   # EA rewrites rates*.csv now -> fresh candles every cycle
+            except Exception as e:
+                print("MT5 rates refresh failed, reading last file:", e)
+            try:
                 df = pd.read_csv(os.path.join(self.dir, "rates.csv"))
                 df.index = pd.to_datetime(df["time"], unit="s", utc=True)
                 self._df = df[["open", "high", "low", "close"]].astype(float).sort_index()
