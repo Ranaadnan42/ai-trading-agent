@@ -1,0 +1,48 @@
+name: Owner Orders (WhatsApp Manager)
+
+# Adnan WhatsApp Manager ko trading ki koi tabdeeli kahe -> Supabase qatar -> yeh job uthati hai,
+# AI code/settings badalta hai, check karta hai, save karta hai, aur WhatsApp par batata hai.
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: trading-orders
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Hukam uthao
+        id: q
+        run: |
+          curl -s -m 30 "https://fobzocsluzwcqretshnm.supabase.co/functions/v1/whatsapp-webhook?trading_cmds=1" > /tmp/cmds.json || echo '{}' > /tmp/cmds.json
+          N=$(python3 -c "import json;print(len(json.load(open('/tmp/cmds.json')).get('cmds',[])))" 2>/dev/null || echo 0)
+          echo "n=$N" >> $GITHUB_OUTPUT
+          python3 -c "import json;print(json.dumps(json.load(open('/tmp/cmds.json')).get('cmds',[])))" > /tmp/orders.json 2>/dev/null || echo '[]' > /tmp/orders.json
+          cat /tmp/orders.json
+      - uses: actions/checkout@v4
+        if: steps.q.outputs.n != '0'
+      - uses: actions/setup-python@v5
+        if: steps.q.outputs.n != '0'
+        with:
+          python-version: "3.11"
+          cache: pip
+      - if: steps.q.outputs.n != '0'
+        run: pip install -r requirements.txt
+      - name: Hukam poora karo
+        if: steps.q.outputs.n != '0'
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          export ORDERS="$(cat /tmp/orders.json)"
+          python -m agent.owner_order
