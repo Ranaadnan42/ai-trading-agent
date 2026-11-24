@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: trading-agent
+  group: trading-review
   cancel-in-progress: false
 
 permissions:
