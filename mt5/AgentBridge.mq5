@@ -77,6 +77,7 @@ void WriteRates()
    WriteRatesTF(PERIOD_H1, 1000, "rates.csv");
    WriteRatesTF(PERIOD_M15, 600, "rates_m15.csv");
    WriteRatesTF(PERIOD_D1, 300, "rates_d1.csv");
+   WriteRatesTF(PERIOD_H1, 6000, "rates_h1_long.csv");   // ~1 year of 1H for the strategy backtests
 }
 
 void WriteState()

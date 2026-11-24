@@ -10,7 +10,7 @@ import sys
 
 import pandas as pd
 
-from . import brain, config, llm, memory, news, notify, risk, structure
+from . import brain, config, llm, memory, news, notify, playbook, risk, structure
 from .broker import get_broker
 from .indicators import atr, resample, summarize
 
@@ -123,9 +123,20 @@ def main():
         if len(llm.available_members()) < config.MIN_AGREE:
             return skip("not enough AI keys configured")
 
+        try:
+            long_h1 = _tf(broker, "1h_long")
+            if long_h1 is None or len(long_h1) < len(broker.candles()):
+                long_h1 = broker.candles()
+            pb = playbook.evaluate(long_h1)
+            pb_text = playbook.for_prompt(pb)
+        except Exception as e:
+            print("playbook failed:", e)
+            pb, pb_text = {}, "not available this cycle"
+        print(pb_text)
+
         recent = [{k: t.get(k) for k in ("side", "pnl", "r", "exit_reason", "setup", "lesson")}
                   for t in memory.closed_trades()[-5:]]
-        ctx = brain.build_context(mkt, acct, positions, news_text, memory.lessons(), recent)
+        ctx = brain.build_context(mkt, acct, positions, news_text, memory.lessons(), recent, pb_text)
         d = brain.committee_decide(ctx, mkt)
         log = {"action": d["action"], "price": mkt["bid"],
                "votes": [{"member": v["member"], "action": v["action"],
@@ -135,7 +146,11 @@ def main():
             side = d["action"]
             entry = mkt["ask"] if side == "BUY" else mkt["bid"]
             lv = risk.check_levels(side, entry, d["sl"], d["tp"], mkt["atr"])
-            if isinstance(lv, str):
+            confirm = playbook.confirming(pb, side) if pb else []
+            log["playbook"] = confirm
+            if config.PLAYBOOK_GATE and pb and playbook.any_proven(pb) and not confirm:
+                log.update(action="REJECTED", why=f"no PROVEN playbook strategy confirms {side} on the last 1H bars")
+            elif isinstance(lv, str):
                 log.update(action="REJECTED", why=lv)
             else:
                 sl, tp = lv
@@ -148,10 +163,11 @@ def main():
                     memory.log_trade({"event": "open", "id": pos["id"], "side": side, "entry": pos["entry"],
                                       "sl": sl, "tp": tp, "lots": lots, "risk_usd": risk_usd,
                                       "confidence": round(d["confidence"]), "setup": d.get("setup"),
-                                      "reason": d["reason"], "mode": broker.name})
+                                      "reason": d["reason"], "mode": broker.name, "playbook": confirm})
                     notify.send(f"📈 {config.SYMBOL} {side} {lots} lots @ {pos['entry']:.2f}\n"
                                 f"SL {sl} | TP {tp} | risk {risk_usd}$ ({config.RISK_PCT}%)\n"
-                                f"Mode: {broker.name}\nWhy: {d['reason'][:600]}")
+                                f"Mode: {broker.name}\nPlaybook: {', '.join(playbook.NAMES[c] for c in confirm) or '-'}\n"
+                                f"Why: {d['reason'][:600]}")
         memory.log_decision(log)
         print(json.dumps(log, indent=1, default=str))
     finally:

@@ -27,6 +27,7 @@ MIN_SL_ATR, MAX_SL_ATR = 0.6, 3.0                 # stop distance must be sane v
 MIN_CONFIDENCE = 60
 MIN_AGREE = 2                                     # at least 2 AIs must agree on direction
 MAX_SPREAD = _f("MAX_SPREAD", 0.6)                # skip if gold spread is wider (in $)
+PLAYBOOK_GATE = _f("PLAYBOOK_GATE", 1) > 0           # trade only when a PROVEN backtested strategy confirms
 BREAKEVEN_AT_R = 1.0                              # move SL to entry after +1R
 NEWS_BLOCK_MINUTES = 45                           # no new trades +-45 min of high-impact USD news
 PAPER_START_BALANCE = 10_000.0

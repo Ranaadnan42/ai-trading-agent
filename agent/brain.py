@@ -33,13 +33,18 @@ Rules you must respect:
   The SL must sit at least 0.5x the 1H ATR BEYOND the swing high/low or zone edge (never just 1-2 points past it) -
   stops placed right at the swing get hunted. If that buffered SL does not fit the sizing limit -> HOLD.
 - Take-profit must give at least {config.MIN_RR}:1 reward-to-risk, placed just before the next opposing zone/level/liquidity pool.
+- STRATEGY PLAYBOOK: these are strategies used by traders worldwide, with their REAL backtest results on this market.
+  Strongly prefer trades where a PROVEN strategy is FIRING NOW in your direction and agrees with the top-down read -
+  use its stop as a guide (still buffered beyond structure). Learn from the table which styles work on gold right now
+  (e.g. if breakouts are PROVEN and reversions LOSING, favour trend/breakout setups). When the table has PROVEN
+  strategies, a trade none of them confirms is rejected by the system, so HOLD instead. Name the strategy in "setup".
 - Use the LESSONS learned from the agent's own past trades as guidance, not as reasons to never trade.
 Answer ONLY with JSON:
 {{"action": "BUY|SELL|HOLD", "confidence": 0-100, "sl": price, "tp": price, "reason": "max 70 words: HTF bias, zone/level, liquidity, Bollinger, LTF trigger", "setup": "short name of the setup"}}
 For HOLD, sl and tp can be null."""
 
 
-def build_context(mkt, account, positions, news_text, lessons, recent):
+def build_context(mkt, account, positions, news_text, lessons, recent, playbook_text="not available"):
     return "\n".join([
         f"ACCOUNT: balance {account['balance']:.2f}, equity {account['equity']:.2f}. Open positions: {json.dumps(positions) if positions else 'none'}",
         f"CURRENT PRICE: bid {mkt['bid']:.2f} ask {mkt['ask']:.2f} (UTC {mkt['time']})",
@@ -52,6 +57,7 @@ def build_context(mkt, account, positions, news_text, lessons, recent):
         "MARKET 1H: " + json.dumps(mkt["h1"]),
         "MARKET 15M (entry timing): " + (json.dumps(mkt["m15"]) if mkt.get("m15") else "not available - time entry on 1H"),
         "KEY LIQUIDITY LEVELS: " + json.dumps(mkt.get("key_levels", {})),
+        "STRATEGY PLAYBOOK (world-known strategies, backtested on this exact broker data):\n" + playbook_text,
         "RECENT CLOSED TRADES: " + (json.dumps(recent) if recent else "none yet"),
         "LESSONS LEARNED:\n" + lessons,
         "Decide now.",

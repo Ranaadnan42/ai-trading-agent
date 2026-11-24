@@ -39,6 +39,8 @@ class PaperBroker:
 
     def candles_tf(self, tf):
         try:
+            if tf == "1h_long":
+                return _yahoo_candles("1h", "730d")
             return _yahoo_candles(tf, "60d" if tf == "15m" else "2y")
         except Exception as e:
             print(f"Yahoo {tf} candles unavailable:", e)
@@ -152,6 +154,8 @@ class MetaApiBroker:
 
     def candles_tf(self, tf):
         try:
+            if tf == "1h_long":
+                return None
             raw = self._r(self.acc.get_historical_candles(config.SYMBOL, tf, None, 600 if tf == "15m" else 300))
             df = pd.DataFrame(raw)
             df.index = pd.to_datetime(df["time"], utc=True)
@@ -310,7 +314,7 @@ class MT5Broker:
 
     def candles_tf(self, tf):
         """'15m' or '1d' straight from the EA (exact broker prices). None if not available."""
-        name = {"15m": "rates_m15.csv", "1d": "rates_d1.csv"}.get(tf)
+        name = {"15m": "rates_m15.csv", "1d": "rates_d1.csv", "1h_long": "rates_h1_long.csv"}.get(tf)
         try:
             df = pd.read_csv(os.path.join(self.dir, name))
             df.index = pd.to_datetime(df["time"], unit="s", utc=True)
