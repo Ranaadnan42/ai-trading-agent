@@ -15,6 +15,8 @@ Rules you must respect:
 - Missing good trades is also a cost. If the trend is clear and a sane SL/TP fits, take the trade; risk is
   already capped at a small % by the risk engine.
 - Every trade needs a logical stop-loss beyond recent structure (swing high/low), roughly {config.MIN_SL_ATR}-{config.MAX_SL_ATR}x the 1H ATR.
+  The SL must sit at least 0.5x the 1H ATR BEYOND the swing high/low (never just 1-2 points above/below it) -
+  stops placed right at the swing get hunted. If that buffered SL does not fit the sizing limit -> HOLD.
 - Take-profit must give at least {config.MIN_RR}:1 reward-to-risk, placed before obvious resistance/support.
 - Avoid trading straight into major levels, during choppy/MIXED conditions, or right before high-impact news.
 - Use the LESSONS learned from the agent's own past trades as guidance, not as reasons to never trade.
