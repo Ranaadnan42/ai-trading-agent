@@ -1,14 +1,14 @@
 {
- "computed_at": "2026-11-25 19:07:01.750781+00:00",
+ "computed_at": "2026-11-25 20:07:02.399086+00:00",
  "bars_tested": 5999,
- "from": "2025-11-20 00:00:00+00:00",
+ "from": "2025-11-20 01:00:00+00:00",
  "strategies": {
   "ema_pullback": {
    "trades": 151,
    "win_rate": 36.4,
    "profit_factor": 1.05,
    "avg_r": 0.033,
-   "total_r": 4.9,
+   "total_r": 5.1,
    "max_dd_r": 15.1,
    "max_loss_streak": 10,
    "t_stat": 0.29,
@@ -283,8 +283,16 @@
   {
    "strategy": "connors_rsi2",
    "side": "SELL",
-   "bars_ago": 0,
+   "bars_ago": 1,
    "sl": 3582.41,
+   "rr": 1.5,
+   "status": "WEAK"
+  },
+  {
+   "strategy": "connors_rsi2",
+   "side": "SELL",
+   "bars_ago": 0,
+   "sl": 3590.56,
    "rr": 1.5,
    "status": "WEAK"
   }
