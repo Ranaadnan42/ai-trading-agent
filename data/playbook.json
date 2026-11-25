@@ -1,7 +1,7 @@
 {
- "computed_at": "2026-11-25 10:07:01.924911+00:00",
+ "computed_at": "2026-11-25 11:07:02.686492+00:00",
  "bars_tested": 5999,
- "from": "2025-11-19 14:00:00+00:00",
+ "from": "2025-11-19 15:00:00+00:00",
  "strategies": {
   "ema_pullback": {
    "trades": 152,
@@ -79,14 +79,14 @@
    "status": "WEAK"
   },
   "asian_sweep": {
-   "trades": 90,
-   "win_rate": 23.3,
-   "profit_factor": 0.59,
-   "avg_r": -0.316,
-   "total_r": -28.4,
+   "trades": 89,
+   "win_rate": 23.6,
+   "profit_factor": 0.6,
+   "avg_r": -0.308,
+   "total_r": -27.4,
    "max_dd_r": 32.1,
    "max_loss_streak": 8,
-   "t_stat": -2.35,
+   "t_stat": -2.27,
    "last_90d": {
     "trades": 23,
     "win_rate": 30.4,
@@ -179,14 +179,14 @@
    "status": "WEAK"
   },
   "bb_reversion": {
-   "trades": 128,
-   "win_rate": 42.2,
-   "profit_factor": 1.07,
-   "avg_r": 0.04,
-   "total_r": 5.1,
+   "trades": 127,
+   "win_rate": 42.5,
+   "profit_factor": 1.08,
+   "avg_r": 0.048,
+   "total_r": 6.1,
    "max_dd_r": 7.4,
    "max_loss_streak": 6,
-   "t_stat": 0.37,
+   "t_stat": 0.44,
    "last_90d": {
     "trades": 33,
     "win_rate": 42.4,
@@ -279,14 +279,5 @@
    "status": "LOSING"
   }
  },
- "firing": [
-  {
-   "strategy": "engulf_extreme",
-   "side": "BUY",
-   "bars_ago": 2,
-   "sl": 3502.57,
-   "rr": 2.0,
-   "status": "LOSING"
-  }
- ]
+ "firing": []
 }
