@@ -1,7 +1,7 @@
 {
- "computed_at": "2026-11-25 05:07:01.757621+00:00",
+ "computed_at": "2026-11-25 06:07:01.803143+00:00",
  "bars_tested": 5999,
- "from": "2025-11-19 09:00:00+00:00",
+ "from": "2025-11-19 10:00:00+00:00",
  "strategies": {
   "ema_pullback": {
    "trades": 151,
@@ -104,23 +104,23 @@
    "status": "LOSING"
   },
   "pdh_pdl_sweep": {
-   "trades": 131,
-   "win_rate": 35.1,
-   "profit_factor": 1.06,
-   "avg_r": 0.038,
-   "total_r": 4.9,
+   "trades": 132,
+   "win_rate": 34.8,
+   "profit_factor": 1.04,
+   "avg_r": 0.03,
+   "total_r": 3.9,
    "max_dd_r": 16.3,
    "max_loss_streak": 16,
-   "t_stat": 0.3,
+   "t_stat": 0.24,
    "last_90d": {
-    "trades": 40,
-    "win_rate": 30.0,
-    "profit_factor": 0.83,
-    "avg_r": -0.12,
-    "total_r": -4.8,
-    "max_dd_r": 9.5,
+    "trades": 41,
+    "win_rate": 29.3,
+    "profit_factor": 0.8,
+    "avg_r": -0.141,
+    "total_r": -5.8,
+    "max_dd_r": 10.5,
     "max_loss_streak": 6,
-    "t_stat": -0.54
+    "t_stat": -0.66
    },
    "live": {
     "trades": 0
@@ -229,23 +229,23 @@
    "status": "WEAK"
   },
   "engulf_extreme": {
-   "trades": 85,
-   "win_rate": 27.1,
-   "profit_factor": 0.66,
-   "avg_r": -0.25,
-   "total_r": -21.2,
-   "max_dd_r": 20.2,
+   "trades": 86,
+   "win_rate": 26.7,
+   "profit_factor": 0.65,
+   "avg_r": -0.258,
+   "total_r": -22.2,
+   "max_dd_r": 21.2,
    "max_loss_streak": 9,
-   "t_stat": -1.82,
+   "t_stat": -1.9,
    "last_90d": {
-    "trades": 23,
-    "win_rate": 17.4,
-    "profit_factor": 0.38,
-    "avg_r": -0.518,
-    "total_r": -11.9,
-    "max_dd_r": 14.9,
-    "max_loss_streak": 8,
-    "t_stat": -2.24
+    "trades": 24,
+    "win_rate": 16.7,
+    "profit_factor": 0.36,
+    "avg_r": -0.538,
+    "total_r": -12.9,
+    "max_dd_r": 15.9,
+    "max_loss_streak": 9,
+    "t_stat": -2.42
    },
    "live": {
     "trades": 0
@@ -281,20 +281,20 @@
  },
  "firing": [
   {
+   "strategy": "turtle_breakout",
+   "side": "SELL",
+   "bars_ago": 0,
+   "sl": 3563.22,
+   "rr": 2.0,
+   "status": "PROVEN"
+  },
+  {
    "strategy": "pdh_pdl_sweep",
    "side": "BUY",
-   "bars_ago": 0,
+   "bars_ago": 1,
    "sl": 3533.2,
    "rr": 2.0,
    "status": "WEAK"
-  },
-  {
-   "strategy": "engulf_extreme",
-   "side": "BUY",
-   "bars_ago": 2,
-   "sl": 3523.45,
-   "rr": 2.0,
-   "status": "LOSING"
   }
  ]
 }
