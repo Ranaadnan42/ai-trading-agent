@@ -1,26 +1,26 @@
 {
- "computed_at": "2026-11-25 06:07:01.803143+00:00",
+ "computed_at": "2026-11-25 07:07:01.661649+00:00",
  "bars_tested": 5999,
- "from": "2025-11-19 10:00:00+00:00",
+ "from": "2025-11-19 11:00:00+00:00",
  "strategies": {
   "ema_pullback": {
-   "trades": 151,
-   "win_rate": 35.8,
-   "profit_factor": 1.02,
-   "avg_r": 0.013,
-   "total_r": 1.9,
+   "trades": 152,
+   "win_rate": 36.2,
+   "profit_factor": 1.04,
+   "avg_r": 0.026,
+   "total_r": 3.9,
    "max_dd_r": 15.1,
    "max_loss_streak": 10,
-   "t_stat": 0.11,
+   "t_stat": 0.23,
    "last_90d": {
-    "trades": 38,
-    "win_rate": 39.5,
-    "profit_factor": 1.24,
-    "avg_r": 0.15,
-    "total_r": 5.7,
+    "trades": 39,
+    "win_rate": 41.0,
+    "profit_factor": 1.33,
+    "avg_r": 0.197,
+    "total_r": 7.7,
     "max_dd_r": 5.1,
     "max_loss_streak": 4,
-    "t_stat": 0.63
+    "t_stat": 0.83
    },
    "live": {
     "trades": 0
@@ -283,15 +283,23 @@
   {
    "strategy": "turtle_breakout",
    "side": "SELL",
-   "bars_ago": 0,
+   "bars_ago": 1,
    "sl": 3563.22,
+   "rr": 2.0,
+   "status": "PROVEN"
+  },
+  {
+   "strategy": "turtle_breakout",
+   "side": "SELL",
+   "bars_ago": 0,
+   "sl": 3555.82,
    "rr": 2.0,
    "status": "PROVEN"
   },
   {
    "strategy": "pdh_pdl_sweep",
    "side": "BUY",
-   "bars_ago": 1,
+   "bars_ago": 2,
    "sl": 3533.2,
    "rr": 2.0,
    "status": "WEAK"
