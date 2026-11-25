@@ -1,12 +1,13 @@
-# Lessons playbook (reset 2026-11-22 - old rules blocked every trade)
-<!-- all-time: {"trades": 0} -->
+# Lessons playbook (updated 2026-11-25 by Gemini)
+<!-- all-time: {"trades": 2, "win_rate": 0.0, "profit_factor": 0.0, "net_pnl": -36.27, "avg_r": -1.01, "max_drawdown_pct": 0.36} -->
 
-- When Daily and 4H trends point the same way -> look for trades in that direction only; this is the main edge.
-- When the trend is down and price pulls back up to 1H EMA20/EMA50 and stalls (rejection wick or bearish 1H close) -> SELL with SL above the pullback high.
-- When the trend is up and price pulls back down to 1H EMA20/EMA50 and holds (bullish 1H close) -> BUY with SL below the pullback low.
-- When a key level breaks with a strong 1H body close and the next candles retest it -> trade the break in the trend direction.
-- Oversold/overbought RSI inside a strong trend is normal -> it is NOT a reason by itself to skip a trend trade, but avoid entering after a single huge candle; wait for the next small pullback/consolidation.
-- Never trade against the Daily+4H trend just because RSI is extreme; a counter-trend trade needs a clear 1H higher-high/higher-low (or lower-high/lower-low) shift first.
-- When 4H and 1H disagree and price is chopping between EMAs -> HOLD.
-- When high-impact USD news is within the next hour -> HOLD.
-- If the nearest opposite level leaves less than 1.5:1 reward-to-risk -> HOLD.
+- When Daily and 4H trends are aligned -> trade exclusively in that direction as the primary trend edge.
+- When Daily and 4H are bearish and price pulls back to the 1H EMA20/EMA50 resistance zone -> SELL when a bearish rejection candle closes near the EMAs, with SL placed above the pullback high.
+- When Daily and 4H are bullish and price pulls back to the 1H EMA20/EMA50 support zone -> BUY when a bullish rejection candle closes near the EMAs, with SL placed below the pullback low.
+- When a key structure level breaks with a strong 1H close in the trend direction -> enter on a shallow retest of the broken level.
+- When the HTF trend is strong -> enter trend continuation trades on 15M micro-structure breaks following a shallow pullback.
+- Do not chase short entries far below the 1H EMA resistance zone -> wait for price to pull back near the EMAs before selling to avoid stop-outs on deeper retests.
+- Do not short directly into an unbroken 4H demand zone -> wait for a breakdown close below demand or a pullback up to supply.
+- Oversold or overbought RSI within an established HTF trend is normal -> do not skip valid trend retests solely due to RSI readings.
+- When 4H and 1H trends conflict and price is chopping between 1H EMAs -> HOLD until a clear 1H directional close occurs.
+- If the target to the nearest opposing structure provides less than a 1.5:1 reward-to-risk ratio -> HOLD for a better entry point.
