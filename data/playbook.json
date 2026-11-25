@@ -1,7 +1,7 @@
 {
- "computed_at": "2026-11-25 11:07:02.686492+00:00",
+ "computed_at": "2026-11-25 12:07:02.732929+00:00",
  "bars_tested": 5999,
- "from": "2025-11-19 15:00:00+00:00",
+ "from": "2025-11-19 16:00:00+00:00",
  "strategies": {
   "ema_pullback": {
    "trades": 152,
@@ -113,14 +113,14 @@
    "max_loss_streak": 16,
    "t_stat": 0.24,
    "last_90d": {
-    "trades": 41,
-    "win_rate": 29.3,
-    "profit_factor": 0.8,
-    "avg_r": -0.141,
-    "total_r": -5.8,
+    "trades": 40,
+    "win_rate": 30.0,
+    "profit_factor": 0.83,
+    "avg_r": -0.12,
+    "total_r": -4.8,
     "max_dd_r": 10.5,
-    "max_loss_streak": 6,
-    "t_stat": -0.66
+    "max_loss_streak": 5,
+    "t_stat": -0.54
    },
    "live": {
     "trades": 0
@@ -188,14 +188,14 @@
    "max_loss_streak": 6,
    "t_stat": 0.44,
    "last_90d": {
-    "trades": 33,
-    "win_rate": 42.4,
-    "profit_factor": 1.08,
-    "avg_r": 0.044,
-    "total_r": 1.5,
+    "trades": 32,
+    "win_rate": 43.8,
+    "profit_factor": 1.13,
+    "avg_r": 0.077,
+    "total_r": 2.5,
     "max_dd_r": 3.6,
     "max_loss_streak": 3,
-    "t_stat": 0.2
+    "t_stat": 0.35
    },
    "live": {
     "trades": 0
@@ -229,23 +229,23 @@
    "status": "WEAK"
   },
   "engulf_extreme": {
-   "trades": 86,
-   "win_rate": 26.7,
-   "profit_factor": 0.65,
-   "avg_r": -0.258,
-   "total_r": -22.2,
-   "max_dd_r": 21.2,
-   "max_loss_streak": 9,
-   "t_stat": -1.9,
+   "trades": 87,
+   "win_rate": 26.4,
+   "profit_factor": 0.64,
+   "avg_r": -0.267,
+   "total_r": -23.2,
+   "max_dd_r": 22.2,
+   "max_loss_streak": 10,
+   "t_stat": -1.99,
    "last_90d": {
-    "trades": 24,
-    "win_rate": 16.7,
-    "profit_factor": 0.36,
-    "avg_r": -0.538,
-    "total_r": -12.9,
-    "max_dd_r": 15.9,
-    "max_loss_streak": 9,
-    "t_stat": -2.42
+    "trades": 25,
+    "win_rate": 16.0,
+    "profit_factor": 0.35,
+    "avg_r": -0.557,
+    "total_r": -13.9,
+    "max_dd_r": 16.9,
+    "max_loss_streak": 10,
+    "t_stat": -2.6
    },
    "live": {
     "trades": 0
@@ -279,5 +279,14 @@
    "status": "LOSING"
   }
  },
- "firing": []
+ "firing": [
+  {
+   "strategy": "turtle_breakout",
+   "side": "SELL",
+   "bars_ago": 0,
+   "sl": 3532.6,
+   "rr": 2.0,
+   "status": "PROVEN"
+  }
+ ]
 }
