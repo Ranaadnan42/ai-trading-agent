@@ -1,14 +1,14 @@
 {
- "computed_at": "2026-11-25 22:07:02.535860+00:00",
- "bars_tested": 6000,
- "from": "2025-11-20 02:00:00+00:00",
+ "computed_at": "2026-11-25 23:07:02.316778+00:00",
+ "bars_tested": 5999,
+ "from": "2025-11-20 03:00:00+00:00",
  "strategies": {
   "ema_pullback": {
    "trades": 151,
    "win_rate": 36.4,
    "profit_factor": 1.05,
    "avg_r": 0.033,
-   "total_r": 5.1,
+   "total_r": 5.0,
    "max_dd_r": 15.1,
    "max_loss_streak": 10,
    "t_stat": 0.29,
