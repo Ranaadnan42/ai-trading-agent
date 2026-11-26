@@ -1,6 +1,6 @@
 {
- "computed_at": "2026-11-26 19:13:51.433527+00:00",
- "bars_tested": 5999,
+ "computed_at": "2026-11-26 20:07:03.109729+00:00",
+ "bars_tested": 6000,
  "from": "2025-11-21 00:00:00+00:00",
  "strategies": {
   "ema_pullback": {
@@ -279,14 +279,5 @@
    "status": "LOSING"
   }
  },
- "firing": [
-  {
-   "strategy": "macd_trend",
-   "side": "SELL",
-   "bars_ago": 2,
-   "sl": 3602.8,
-   "rr": 2.0,
-   "status": "WEAK"
-  }
- ]
+ "firing": []
 }
