@@ -1,7 +1,7 @@
 {
- "computed_at": "2026-11-26 01:07:02.535151+00:00",
+ "computed_at": "2026-11-26 02:07:01.871218+00:00",
  "bars_tested": 5999,
- "from": "2025-11-20 05:00:00+00:00",
+ "from": "2025-11-20 06:00:00+00:00",
  "strategies": {
   "ema_pullback": {
    "trades": 151,
@@ -279,14 +279,5 @@
    "status": "LOSING"
   }
  },
- "firing": [
-  {
-   "strategy": "connors_rsi2",
-   "side": "SELL",
-   "bars_ago": 2,
-   "sl": 3633.47,
-   "rr": 1.5,
-   "status": "WEAK"
-  }
- ]
+ "firing": []
 }
