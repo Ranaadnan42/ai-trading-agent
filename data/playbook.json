@@ -1,7 +1,7 @@
 {
- "computed_at": "2026-11-26 08:07:02.295304+00:00",
+ "computed_at": "2026-11-26 09:07:01.853048+00:00",
  "bars_tested": 5999,
- "from": "2025-11-20 12:00:00+00:00",
+ "from": "2025-11-20 13:00:00+00:00",
  "strategies": {
   "ema_pullback": {
    "trades": 151,
@@ -54,14 +54,14 @@
    "status": "PROVEN"
   },
   "london_breakout": {
-   "trades": 33,
-   "win_rate": 45.5,
-   "profit_factor": 1.63,
-   "avg_r": 0.33,
-   "total_r": 10.9,
+   "trades": 32,
+   "win_rate": 46.9,
+   "profit_factor": 1.73,
+   "avg_r": 0.371,
+   "total_r": 11.9,
    "max_dd_r": 3.1,
    "max_loss_streak": 4,
-   "t_stat": 1.3,
+   "t_stat": 1.44,
    "last_90d": {
     "trades": 10,
     "win_rate": 50.0,
@@ -88,14 +88,14 @@
    "max_loss_streak": 8,
    "t_stat": -2.27,
    "last_90d": {
-    "trades": 22,
-    "win_rate": 31.8,
-    "profit_factor": 0.91,
-    "avg_r": -0.064,
-    "total_r": -1.4,
+    "trades": 21,
+    "win_rate": 33.3,
+    "profit_factor": 0.97,
+    "avg_r": -0.018,
+    "total_r": -0.4,
     "max_dd_r": 4.1,
     "max_loss_streak": 4,
-    "t_stat": -0.21
+    "t_stat": -0.06
    },
    "live": {
     "trades": 0
