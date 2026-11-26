@@ -1,7 +1,7 @@
 {
- "computed_at": "2026-11-26 05:07:02.420112+00:00",
+ "computed_at": "2026-11-26 06:07:01.903605+00:00",
  "bars_tested": 5999,
- "from": "2025-11-20 09:00:00+00:00",
+ "from": "2025-11-20 10:00:00+00:00",
  "strategies": {
   "ema_pullback": {
    "trades": 151,
@@ -279,14 +279,5 @@
    "status": "LOSING"
   }
  },
- "firing": [
-  {
-   "strategy": "pdh_pdl_sweep",
-   "side": "SELL",
-   "bars_ago": 2,
-   "sl": 3622.26,
-   "rr": 2.0,
-   "status": "WEAK"
-  }
- ]
+ "firing": []
 }
