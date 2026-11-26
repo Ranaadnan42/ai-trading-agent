@@ -1,7 +1,7 @@
 {
- "computed_at": "2026-11-26 12:07:02.058451+00:00",
+ "computed_at": "2026-11-26 13:07:01.673088+00:00",
  "bars_tested": 5999,
- "from": "2025-11-20 16:00:00+00:00",
+ "from": "2025-11-20 17:00:00+00:00",
  "strategies": {
   "ema_pullback": {
    "trades": 151,
@@ -29,14 +29,14 @@
    "status": "WEAK"
   },
   "turtle_breakout": {
-   "trades": 144,
-   "win_rate": 45.1,
-   "profit_factor": 1.55,
-   "avg_r": 0.3,
-   "total_r": 43.3,
+   "trades": 143,
+   "win_rate": 45.5,
+   "profit_factor": 1.57,
+   "avg_r": 0.31,
+   "total_r": 44.3,
    "max_dd_r": 8.8,
    "max_loss_streak": 6,
-   "t_stat": 2.46,
+   "t_stat": 2.53,
    "last_90d": {
     "trades": 36,
     "win_rate": 47.2,
@@ -283,7 +283,7 @@
   {
    "strategy": "ema_pullback",
    "side": "SELL",
-   "bars_ago": 1,
+   "bars_ago": 2,
    "sl": 3596.06,
    "rr": 2.0,
    "status": "WEAK"
