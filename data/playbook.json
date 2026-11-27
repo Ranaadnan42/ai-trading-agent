@@ -1,7 +1,7 @@
 {
- "computed_at": "2026-11-27 00:11:19.079356+00:00",
+ "computed_at": "2026-11-27 01:07:03.307233+00:00",
  "bars_tested": 5999,
- "from": "2025-11-21 02:00:00+00:00",
+ "from": "2025-11-21 03:00:00+00:00",
  "strategies": {
   "ema_pullback": {
    "trades": 151,
@@ -279,5 +279,14 @@
    "status": "LOSING"
   }
  },
- "firing": []
+ "firing": [
+  {
+   "strategy": "ema_pullback",
+   "side": "SELL",
+   "bars_ago": 0,
+   "sl": 3582.58,
+   "rr": 2.0,
+   "status": "WEAK"
+  }
+ ]
 }
