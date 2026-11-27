@@ -1,17 +1,17 @@
 {
- "computed_at": "2026-11-27 16:07:01.843942+00:00",
+ "computed_at": "2026-11-27 17:07:01.960362+00:00",
  "bars_tested": 5999,
- "from": "2025-11-21 18:00:00+00:00",
+ "from": "2025-11-21 19:00:00+00:00",
  "strategies": {
   "ema_pullback": {
-   "trades": 151,
-   "win_rate": 35.8,
-   "profit_factor": 1.04,
-   "avg_r": 0.026,
-   "total_r": 3.9,
+   "trades": 152,
+   "win_rate": 36.2,
+   "profit_factor": 1.06,
+   "avg_r": 0.039,
+   "total_r": 5.9,
    "max_dd_r": 15.1,
    "max_loss_streak": 10,
-   "t_stat": 0.23,
+   "t_stat": 0.34,
    "last_90d": {
     "trades": 39,
     "win_rate": 41.0,
@@ -104,14 +104,14 @@
    "status": "LOSING"
   },
   "pdh_pdl_sweep": {
-   "trades": 132,
-   "win_rate": 34.8,
-   "profit_factor": 1.04,
-   "avg_r": 0.03,
-   "total_r": 3.9,
+   "trades": 131,
+   "win_rate": 34.4,
+   "profit_factor": 1.02,
+   "avg_r": 0.015,
+   "total_r": 1.9,
    "max_dd_r": 17.0,
    "max_loss_streak": 16,
-   "t_stat": 0.24,
+   "t_stat": 0.12,
    "last_90d": {
     "trades": 41,
     "win_rate": 29.3,
@@ -283,7 +283,7 @@
   {
    "strategy": "ema_pullback",
    "side": "SELL",
-   "bars_ago": 0,
+   "bars_ago": 1,
    "sl": 3689.17,
    "rr": 2.0,
    "status": "WEAK"
@@ -291,7 +291,7 @@
   {
    "strategy": "macd_trend",
    "side": "SELL",
-   "bars_ago": 1,
+   "bars_ago": 2,
    "sl": 3665.4,
    "rr": 2.0,
    "status": "WEAK"
