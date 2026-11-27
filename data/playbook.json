@@ -1,7 +1,7 @@
 {
- "computed_at": "2026-11-27 03:07:03.541740+00:00",
+ "computed_at": "2026-11-27 04:07:03.123491+00:00",
  "bars_tested": 5999,
- "from": "2025-11-21 05:00:00+00:00",
+ "from": "2025-11-21 06:00:00+00:00",
  "strategies": {
   "ema_pullback": {
    "trades": 151,
@@ -281,25 +281,25 @@
  },
  "firing": [
   {
-   "strategy": "ema_pullback",
+   "strategy": "connors_rsi2",
    "side": "SELL",
-   "bars_ago": 2,
-   "sl": 3582.58,
-   "rr": 2.0,
+   "bars_ago": 1,
+   "sl": 3652.74,
+   "rr": 1.5,
    "status": "WEAK"
   },
   {
    "strategy": "connors_rsi2",
    "side": "SELL",
    "bars_ago": 0,
-   "sl": 3652.74,
+   "sl": 3659.13,
    "rr": 1.5,
    "status": "WEAK"
   },
   {
    "strategy": "bb_squeeze_break",
    "side": "BUY",
-   "bars_ago": 1,
+   "bars_ago": 2,
    "sl": 3563.28,
    "rr": 2.0,
    "status": "WEAK"
@@ -307,8 +307,16 @@
   {
    "strategy": "bb_squeeze_break",
    "side": "BUY",
-   "bars_ago": 0,
+   "bars_ago": 1,
    "sl": 3564.66,
+   "rr": 2.0,
+   "status": "WEAK"
+  },
+  {
+   "strategy": "bb_squeeze_break",
+   "side": "BUY",
+   "bars_ago": 0,
+   "sl": 3566.57,
    "rr": 2.0,
    "status": "WEAK"
   }
