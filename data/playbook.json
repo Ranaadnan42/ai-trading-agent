@@ -1,7 +1,7 @@
 {
- "computed_at": "2026-11-27 11:07:02.720141+00:00",
+ "computed_at": "2026-11-27 12:07:02.620007+00:00",
  "bars_tested": 5999,
- "from": "2025-11-21 13:00:00+00:00",
+ "from": "2025-11-21 14:00:00+00:00",
  "strategies": {
   "ema_pullback": {
    "trades": 152,
@@ -279,14 +279,5 @@
    "status": "LOSING"
   }
  },
- "firing": [
-  {
-   "strategy": "turtle_breakout",
-   "side": "BUY",
-   "bars_ago": 2,
-   "sl": 3637.89,
-   "rr": 2.0,
-   "status": "PROVEN"
-  }
- ]
+ "firing": []
 }
