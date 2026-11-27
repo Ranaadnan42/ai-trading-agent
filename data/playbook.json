@@ -1,7 +1,7 @@
 {
- "computed_at": "2026-11-27 09:07:02.528110+00:00",
+ "computed_at": "2026-11-27 10:07:02.896558+00:00",
  "bars_tested": 5999,
- "from": "2025-11-21 11:00:00+00:00",
+ "from": "2025-11-21 12:00:00+00:00",
  "strategies": {
   "ema_pullback": {
    "trades": 151,
@@ -129,23 +129,23 @@
    "status": "WEAK"
   },
   "connors_rsi2": {
-   "trades": 191,
-   "win_rate": 42.9,
-   "profit_factor": 1.11,
-   "avg_r": 0.061,
-   "total_r": 11.6,
+   "trades": 192,
+   "win_rate": 42.7,
+   "profit_factor": 1.1,
+   "avg_r": 0.055,
+   "total_r": 10.6,
    "max_dd_r": 11.3,
    "max_loss_streak": 6,
-   "t_stat": 0.68,
+   "t_stat": 0.62,
    "last_90d": {
-    "trades": 54,
-    "win_rate": 46.3,
-    "profit_factor": 1.26,
-    "avg_r": 0.143,
-    "total_r": 7.7,
+    "trades": 55,
+    "win_rate": 45.5,
+    "profit_factor": 1.22,
+    "avg_r": 0.122,
+    "total_r": 6.7,
     "max_dd_r": 7.8,
     "max_loss_streak": 4,
-    "t_stat": 0.84
+    "t_stat": 0.72
    },
    "live": {
     "trades": 0
@@ -283,7 +283,7 @@
   {
    "strategy": "turtle_breakout",
    "side": "BUY",
-   "bars_ago": 0,
+   "bars_ago": 1,
    "sl": 3637.89,
    "rr": 2.0,
    "status": "PROVEN"
@@ -292,14 +292,6 @@
    "strategy": "connors_rsi2",
    "side": "SELL",
    "bars_ago": 2,
-   "sl": 3684.56,
-   "rr": 1.5,
-   "status": "WEAK"
-  },
-  {
-   "strategy": "connors_rsi2",
-   "side": "SELL",
-   "bars_ago": 1,
    "sl": 3687.43,
    "rr": 1.5,
    "status": "WEAK"
