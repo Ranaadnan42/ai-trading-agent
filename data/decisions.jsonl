@@ -181,3 +181,4 @@
 {"action": "SKIP", "why": "market closed / stale data (4.1h old)", "price": 3653.962, "time": "2026-11-27T23:07:02Z"}
 {"action": "SKIP", "why": "market closed / stale data (5.1h old)", "price": 3653.962, "time": "2026-11-28T00:07:02Z"}
 {"action": "SKIP", "why": "market closed / stale data (6.1h old)", "price": 3653.962, "time": "2026-11-28T01:07:02Z"}
+{"action": "SKIP", "why": "market closed / stale data (7.1h old)", "price": 3653.962, "time": "2026-11-28T02:07:02Z"}
